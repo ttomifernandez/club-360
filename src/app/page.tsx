@@ -1,65 +1,131 @@
-import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import type { Category, Product } from "@/lib/types";
+import { CartProvider } from "@/components/cart-context";
+import { Navbar } from "@/components/navbar";
+import { Catalog } from "@/components/catalog";
+import { CartDrawer } from "@/components/cart-drawer";
+import { WaFloat } from "@/components/wa-float";
+import { ClubCtaButton } from "@/components/club-cta";
+import { ScrollAnimations } from "@/components/scroll-animations";
 
-export default function Home() {
+export const revalidate = 60;
+
+const MARQUEE_ITEMS = [
+  { icon: "emoji_food_beverage", text: "Mates & Yerberas" },
+  { icon: "work", text: "Bolsos de Cuero" },
+  { icon: "restaurant", text: "Cuchillos Artesanales" },
+  { icon: "workspace_premium", text: "Calidad Ultrapremium" },
+  { icon: "sell", text: "Precios de Socio" },
+  { icon: "verified", text: "Hecho a Mano" },
+];
+
+async function getData(): Promise<{ categories: Category[]; products: Product[] }> {
+  try {
+    const supabase = await createClient();
+    const [{ data: categories }, { data: products }] = await Promise.all([
+      supabase.from("categories").select("*").order("position"),
+      supabase
+        .from("products")
+        .select("*, categories(id, name, slug)")
+        .eq("active", true)
+        .order("position"),
+    ]);
+    return { categories: categories ?? [], products: products ?? [] };
+  } catch {
+    // Sin Supabase configurado (dev inicial): catálogo vacío.
+    return { categories: [], products: [] };
+  }
+}
+
+export default async function Home() {
+  const { categories, products } = await getData();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <CartProvider>
+      <ScrollAnimations />
+      <Navbar />
+
+      {/* HERO */}
+      <header className="hero" id="inicio">
+        <div className="hero-content">
+          <div className="hero-badge">
+            <span className="hero-badge-dot"></span>
+            <span>Club de Beneficios 360°</span>
+          </div>
+          <h1>
+            CLUB <span className="highlight">ULTRAPREMIUM</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="hero-sub">
+            Mates y yerberas, bolsos de cuero y cuchillos con mango de ciervo. Piezas
+            artesanales de altísima calidad con{" "}
+            <strong style={{ color: "#fff" }}>
+              precios especiales y descuentos exclusivos
+            </strong>{" "}
+            para socios de la Plataforma Agropecuaria 360.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
+          <a href="#catalogo" className="hero-cta">
+            VER BENEFICIOS
+            <span className="material-symbols-outlined">arrow_downward</span>
           </a>
         </div>
-      </main>
-    </div>
+      </header>
+
+      {/* MARQUEE */}
+      <div className="marquee-section">
+        <div className="marquee-track">
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+            <div className="marquee-item" key={i}>
+              <span className="material-symbols-outlined">{item.icon}</span> {item.text}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CATALOG */}
+      <section id="catalogo" className="catalog">
+        <div className="catalog-inner">
+          <div className="section-header animate-on-scroll">
+            <h2>Club de Beneficios</h2>
+            <p>
+              Piezas artesanales ultrapremium con descuentos exclusivos para socios. Agregá
+              al carrito y pagá online con Mercado Pago o finalizá tu pedido por WhatsApp.
+            </p>
+          </div>
+          <Catalog categories={categories} products={products} />
+        </div>
+      </section>
+
+      {/* CTA BANNER */}
+      <section className="cta-banner" id="club">
+        <div className="cta-banner-inner animate-on-scroll">
+          <h2>
+            Sé parte del <span>Club 360</span>
+          </h2>
+          <p>
+            Los socios de la Plataforma Agropecuaria 360 acceden a descuentos exclusivos y
+            precios especiales en todas las piezas ultrapremium. ¿Todavía no sos socio?
+            Escribinos y activá tus beneficios.
+          </p>
+          <ClubCtaButton />
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="contact">
+        <div className="footer-bar">
+          <p>© 2026 PLATAFORMA AGROPECUARIA 360 SAS.</p>
+          <div className="footer-links">
+            <span className="footer-location">
+              <span className="material-symbols-outlined">location_on</span> Córdoba,
+              Argentina
+            </span>
+            <a href="#inicio">Volver al Inicio</a>
+          </div>
+        </div>
+      </footer>
+
+      <CartDrawer />
+      <WaFloat />
+    </CartProvider>
   );
 }
