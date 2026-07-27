@@ -53,7 +53,7 @@
           <div class="stat"><span>Productos activos</span><strong id="activeCount">0</strong><small>Catálogo publicado</small></div>
           <div class="stat"><span>Valor de inventario</span><strong id="inventoryValue">$0</strong><small>Según precio de venta</small></div>
           <div class="stat"><span>Stock total</span><strong id="stockCount">0</strong><small id="lowStock">Sin alertas</small></div>
-          <div class="stat"><span>Pedidos</span><strong>0</strong><small>Se activa con la base de datos</small></div>
+          <div class="stat"><span>Pedidos</span><strong id="orderCount">0</strong><small id="salesTotal">Sin ventas registradas</small></div>
         </div>
         <div class="panel"><div class="panel-head"><h3>Catálogo reciente</h3><button class="btn" data-view-button="products">Administrar todos</button></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div></div>
       </section>
@@ -106,6 +106,11 @@
     </div>
     <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" id="saveProduct" value="default">Guardar producto</button></div>
   </form>
+</dialog>
+<dialog id="orderModal">
+  <div class="modal-head"><h3 id="orderModalTitle">Detalle del pedido</h3><button class="close" onclick="document.getElementById('orderModal').close()" aria-label="Cerrar">×</button></div>
+  <div id="orderDetail" style="padding:22px"></div>
+  <div class="modal-foot"><button class="btn" onclick="document.getElementById('orderModal').close()">Cerrar</button></div>
 </dialog>
 <dialog id="categoryModal">
   <form method="dialog" id="categoryForm">
@@ -206,8 +211,9 @@ function renderCoupons(){
 }
 function renderOrders(){
  const labels={pending:"Pendiente",paid:"Pagado",preparing:"Preparando",shipped:"Enviado",completed:"Completado",cancelled:"Cancelado"};
+ document.getElementById("orderCount").textContent=orders.length;document.getElementById("salesTotal").textContent=orders.length?money(orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+Number(o.total),0))+" acumulado":"Sin ventas registradas";
  document.getElementById("ordersNotice").classList.toggle("show",!orders.length);
- document.getElementById("orderRows").innerHTML=orders.length?orders.map(o=>`<tr><td><strong>#${o.order_number}</strong></td><td>${escapeHtml(o.customer_name)}<br><small>${escapeHtml(o.customer_phone)}</small></td><td>${shortDate(o.created_at)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${labels[o.status]||o.status}</span></td><td><select data-order-status="${o.id}">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${value===o.status?"selected":""}>${label}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay pedidos.</td></tr>`;
+ document.getElementById("orderRows").innerHTML=orders.length?orders.map(o=>`<tr><td><button data-order-view="${o.id}" style="border:0;background:none;color:var(--green);font-weight:800">#${o.order_number}</button></td><td>${escapeHtml(o.customer_name)}<br><small>${escapeHtml(o.customer_phone)}</small></td><td>${shortDate(o.created_at)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${labels[o.status]||o.status}</span></td><td><select data-order-status="${o.id}">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${value===o.status?"selected":""}>${label}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay pedidos.</td></tr>`;
 }
 function openModal(id){
  const p=products.find(x=>x.id===id);document.getElementById("modalTitle").textContent=p?"Editar producto":"Nuevo producto";document.getElementById("editingId").value=p?.id||"";
@@ -288,6 +294,12 @@ document.getElementById("couponRows").onclick=async e=>{
 };
 document.getElementById("orderRows").onchange=async e=>{
  const select=e.target.closest("[data-order-status]");if(!select)return;const {error}=await db.from("orders").update({status:select.value}).eq("id",select.dataset.orderStatus);if(error)return toast("No se pudo actualizar: "+error.message);await loadRemoteAdminData();toast("Estado actualizado");
+};
+document.getElementById("orderRows").onclick=async e=>{
+ const button=e.target.closest("[data-order-view]");if(!button)return;const order=orders.find(o=>o.id===button.dataset.orderView);const {data:items,error}=await db.from("order_items").select("*").eq("order_id",order.id);if(error)return toast(error.message);
+ document.getElementById("orderModalTitle").textContent=`Pedido #${order.order_number}`;
+ document.getElementById("orderDetail").innerHTML=`<div style="display:grid;gap:16px"><div><strong>${escapeHtml(order.customer_name)}</strong><br><span style="color:var(--muted)">${escapeHtml(order.customer_phone)}${order.customer_email?` · ${escapeHtml(order.customer_email)}`:""}</span></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th></tr></thead><tbody>${(items||[]).map(i=>`<tr><td>${escapeHtml(i.product_name)}</td><td>${i.quantity}</td><td>${money(i.unit_price)}</td></tr>`).join("")}</tbody></table></div><div style="display:flex;justify-content:flex-end;gap:20px"><span>Subtotal: <strong>${money(order.subtotal)}</strong></span><span>Descuento: <strong>${money(order.discount)}</strong></span><span>Total: <strong>${money(order.total)}</strong></span></div>${order.notes?`<div style="background:var(--paper);padding:12px;border-radius:10px"><strong>Notas</strong><br>${escapeHtml(order.notes)}</div>`:""}</div>`;
+ document.getElementById("orderModal").showModal();
 };
 render();
 async function initializeBackend(){
