@@ -21,9 +21,10 @@
     .panel{background:var(--card);border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}.panel-head h3{font:800 16px Manrope;margin:0}.tools{display:flex;gap:9px}.search{border:1px solid var(--line);background:var(--paper);padding:9px 12px;border-radius:9px;min-width:230px;outline:none}.search:focus{border-color:var(--green2)}
     table{width:100%;border-collapse:collapse}th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:#fafbfa}tbody tr:hover{background:#fbfcfb}.product-cell{display:flex;align-items:center;gap:11px}.thumb{width:45px;height:45px;object-fit:cover;border-radius:9px;background:var(--soft)}.product-cell strong{display:block}.product-cell small{color:var(--muted)}.pill{padding:5px 8px;border-radius:99px;background:var(--soft);color:var(--green);font-size:11px;font-weight:700}.pill.off{background:#f1f1f1;color:#777}.stock.low{color:#a16412;font-weight:700}.row-actions{display:flex;gap:5px}.row-actions button{border:0;background:transparent;padding:7px;border-radius:7px}.row-actions button:hover{background:var(--soft)}
     .empty{padding:65px 20px;text-align:center;color:var(--muted)}.view{display:none}.view.active{display:block}.placeholder{padding:65px 30px;text-align:center}.placeholder .big{font-size:38px}.placeholder h3{font:800 22px Manrope;margin:12px 0 7px}.placeholder p{max-width:520px;margin:auto;color:var(--muted);line-height:1.6}
-    dialog{border:0;padding:0;border-radius:18px;width:min(620px,calc(100% - 28px));box-shadow:0 30px 90px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(12,24,19,.55);backdrop-filter:blur(3px)}.modal-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:800 19px Manrope}.close{border:0;background:var(--paper);width:34px;height:34px;border-radius:9px}.form{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:700}.field input,.field select,.field textarea{border:1px solid var(--line);padding:11px 12px;border-radius:9px;outline:none;width:100%}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px var(--soft)}.field textarea{resize:vertical;min-height:85px}.check{display:flex;align-items:center;gap:9px;font-size:13px}.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
+    dialog{border:0;padding:0;border-radius:18px;width:min(620px,calc(100% - 28px));box-shadow:0 30px 90px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(12,24,19,.55);backdrop-filter:blur(3px)}.modal-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:800 19px Manrope}.close{border:0;background:var(--paper);width:34px;height:34px;border-radius:9px}.form{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:700}.field input,.field select,.field textarea{border:1px solid var(--line);padding:11px 12px;border-radius:9px;outline:none;width:100%}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px var(--soft)}.field textarea{resize:vertical;min-height:85px}.field-hint{font-size:11px;color:var(--muted);line-height:1.45}.upload-status{font-size:12px;color:var(--green2);min-height:17px}.check{display:flex;align-items:center;gap:9px;font-size:13px}.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
     .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
     .mobile-head{display:none}
+    .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.connection{font-size:11px;color:var(--muted);margin-top:15px}
     @media(max-width:980px){.shell{grid-template-columns:76px 1fr}.sidebar{padding:22px 10px}.brand{padding:0 7px 23px}.brand-copy,.nav span:not(.icon),.menu-label,.sidebar-foot{display:none}.nav button{justify-content:center}.stats{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:680px){.shell{display:block}.sidebar{height:auto;position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;padding:8px}.brand,.menu-label,.sidebar-foot{display:none}.nav{display:flex;justify-content:space-around}.nav button{padding:10px}.nav button span:not(.icon){display:none}.topbar{height:65px;padding:0 17px}.status{display:none}.content{padding:20px 14px 90px}.intro{align-items:flex-start;gap:12px}.intro h2{font-size:23px}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:14px}.stat strong{font-size:22px}.panel-head{align-items:stretch;flex-direction:column}.tools{display:grid;grid-template-columns:1fr auto}.search{min-width:0}.table-wrap{overflow:auto}table{min-width:730px}.form{grid-template-columns:1fr}.field.full{grid-column:auto}}
   </style>
@@ -67,6 +68,20 @@
     </div>
   </main>
 </div>
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <span class="mark">369</span>
+    <h2>Ingresar al panel</h2>
+    <p>Acceso seguro para el propietario y los operadores autorizados.</p>
+    <form id="loginForm">
+      <input id="loginEmail" type="email" autocomplete="username" required placeholder="Correo">
+      <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Contraseña">
+      <div class="auth-error" id="authError"></div>
+      <button class="btn primary" type="submit">Ingresar</button>
+    </form>
+    <div class="connection">La autenticación se activa al conectar Supabase en Vercel.</div>
+  </div>
+</div>
 
 <dialog id="productModal">
   <form method="dialog" id="productForm">
@@ -79,7 +94,13 @@
       <div class="field"><label>Precio de lista</label><input id="priceOld" required type="number" min="0"></div>
       <div class="field"><label>Precio de venta</label><input id="price" required type="number" min="0"></div>
       <div class="field"><label>Stock</label><input id="stock" required type="number" min="0" value="1"></div>
-      <div class="field"><label>Imagen (ruta o URL)</label><input id="img" required placeholder="images/producto.jpg"></div>
+      <div class="field full">
+        <label>Foto del producto</label>
+        <input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
+        <span class="field-hint">JPG, PNG, WebP o AVIF · máximo 5 MB. Se guardará en Supabase Storage.</span>
+        <span class="upload-status" id="uploadStatus"></span>
+      </div>
+      <div class="field full"><label>URL o ruta actual</label><input id="img" placeholder="images/producto.jpg o https://..."></div>
       <div class="field full"><label>Descripción</label><textarea id="desc" required></textarea></div>
       <label class="check full"><input id="active" type="checkbox" checked> Producto visible en la tienda</label>
     </div>
@@ -88,8 +109,11 @@
 </dialog>
 <div class="toast" id="toast">Cambios guardados</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const STORAGE="br369-products";
+let db=null;
+let remoteMode=false;
 const seed=[
 {id:"mate-imperial",cat:"mates",catLabel:"Mates & Yerberas",tag:{text:"Destacado",cls:""},discount:"-20% Socios",title:"Mate Imperial de Alpaca",desc:"Mate calabaza forrado con virola y base de alpaca cincelada a mano. Incluye bombilla pico de loro.",priceOld:120000,price:96000,stock:8,img:"images/mate-imperial.jpg",active:true},
 {id:"set-yerbera",cat:"mates",catLabel:"Mates & Yerberas",tag:{text:"Set Matero",cls:""},discount:"-25% Socios",title:"Set Yerbera + Azucarera",desc:"Juego matero en cuero vacuno repujado con costura artesanal.",priceOld:95000,price:71250,stock:12,img:"images/set-yerbera.jpg",active:true},
@@ -102,7 +126,34 @@ let products=load();
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 function load(){try{const x=JSON.parse(localStorage.getItem(STORAGE));return Array.isArray(x)&&x.length?x:structuredClone(seed)}catch{return structuredClone(seed)}}
-function persist(message="Cambios guardados"){localStorage.setItem(STORAGE,JSON.stringify(products));render();toast(message)}
+async function persist(message="Cambios guardados", changed=null, removedId=null){
+ localStorage.setItem(STORAGE,JSON.stringify(products));render();toast(message);
+ if(!remoteMode)return;
+ try{
+   if(removedId) await db.from("products").delete().eq("slug",removedId).throwOnError();
+   if(changed){
+     const categoryId=await ensureCategory(changed);
+     const {data,error}=await db.from("products").upsert(toDbProduct(changed,categoryId),{onConflict:"slug"}).select("id").single();
+     if(error)throw error;
+     changed.dbId=data.id;
+   }
+ }catch(error){toast("No se pudo sincronizar: "+error.message)}
+}
+function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||p.catLabel,discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
+function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",active:p.active}}
+async function ensureCategory(p){
+ const {data:existing,error:readError}=await db.from("categories").select("id").eq("slug",p.cat).maybeSingle();
+ if(readError)throw readError;
+ if(existing)return existing.id;
+ const {data,error}=await db.from("categories").insert({name:p.catLabel,slug:p.cat,active:true}).select("id").single();
+ if(error)throw error;
+ return data.id;
+}
+async function loadRemoteProducts(){
+ const {data,error}=await db.from("products").select("*,categories(name,slug)").order("created_at",{ascending:false});
+ if(error)throw error;
+ if(data?.length){products=data.map(fromDbProduct);localStorage.setItem(STORAGE,JSON.stringify(products));render()}
+}
 function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button><button data-delete="${p.id}" title="Eliminar">⌫</button></div></td>`:""}</tr>`}
 function render(){
  const active=products.filter(p=>p.active);document.getElementById("activeCount").textContent=active.length;
@@ -125,6 +176,7 @@ function renderCategories(){
 function openModal(id){
  const p=products.find(x=>x.id===id);document.getElementById("modalTitle").textContent=p?"Editar producto":"Nuevo producto";document.getElementById("editingId").value=p?.id||"";
  ["title","cat","priceOld","price","stock","img","desc"].forEach(k=>document.getElementById(k).value=p?.[k]??"");
+ document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
 function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios"};document.getElementById("pageTitle").textContent=labels[id]||"Panel"}
@@ -138,16 +190,57 @@ document.getElementById("category").oninput=e=>{if(!document.getElementById("edi
 document.getElementById("productRows").onclick=e=>{
  const edit=e.target.closest("[data-edit]"),toggle=e.target.closest("[data-toggle]"),del=e.target.closest("[data-delete]");
  if(edit)openModal(edit.dataset.edit);
- if(toggle){const p=products.find(x=>x.id===toggle.dataset.toggle);p.active=!p.active;persist(p.active?"Producto publicado":"Producto ocultado")}
- if(del&&confirm("¿Eliminar este producto del catálogo?")){products=products.filter(x=>x.id!==del.dataset.delete);persist("Producto eliminado")}
+ if(toggle){const p=products.find(x=>x.id===toggle.dataset.toggle);p.active=!p.active;persist(p.active?"Producto publicado":"Producto ocultado",p)}
+ if(del&&confirm("¿Eliminar este producto del catálogo?")){products=products.filter(x=>x.id!==del.dataset.delete);persist("Producto eliminado",null,del.dataset.delete)}
 };
-document.getElementById("productForm").onsubmit=e=>{
+async function uploadProductImage(file,productSlug){
+ if(!remoteMode)throw new Error("Conectá Supabase para subir fotos desde el panel.");
+ if(file.size>5*1024*1024)throw new Error("La foto supera el máximo de 5 MB.");
+ const allowed=["image/jpeg","image/png","image/webp","image/avif"];
+ if(!allowed.includes(file.type))throw new Error("Formato no permitido. Usá JPG, PNG, WebP o AVIF.");
+ const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+ const safeName=slugify(file.name.replace(/\.[^.]+$/,""))||"foto";
+ const path=`productos/${productSlug}/${Date.now()}-${safeName}.${ext}`;
+ const {error}=await db.storage.from("product-media").upload(path,file,{cacheControl:"31536000",upsert:false,contentType:file.type});
+ if(error)throw error;
+ return db.storage.from("product-media").getPublicUrl(path).data.publicUrl;
+}
+document.getElementById("productForm").onsubmit=async e=>{
  e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("productModal").close();return}const oldId=document.getElementById("editingId").value;const title=document.getElementById("title").value.trim();const category=document.getElementById("category").value.trim();
- const data={id:oldId||slugify(title)+"-"+Date.now().toString().slice(-4),cat:document.getElementById("cat").value.trim(),catLabel:category,tag:{text:category,cls:""},discount:"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:document.getElementById("img").value.trim(),active:document.getElementById("active").checked};
- const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado");document.getElementById("productModal").close();
+ const id=oldId||slugify(title)+"-"+Date.now().toString().slice(-4);let imageUrl=document.getElementById("img").value.trim();const file=document.getElementById("imageFile").files[0];const status=document.getElementById("uploadStatus");const submit=e.submitter;
+ try{
+   submit.disabled=true;
+   if(file){status.textContent="Subiendo foto…";imageUrl=await uploadProductImage(file,id)}
+   if(!imageUrl)throw new Error("Elegí una foto o ingresá una URL.");
+ }catch(error){status.textContent=error.message;submit.disabled=false;return}
+ const data={id,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:{text:category,cls:""},discount:"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,active:document.getElementById("active").checked};
+ const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado",data);document.getElementById("productModal").close();
+ submit.disabled=false;
 };
 document.getElementById("restoreDemo").onclick=()=>{if(confirm("¿Restaurar los productos de demostración?")){products=structuredClone(seed);persist("Catálogo restaurado")}};
 render();
+async function initializeBackend(){
+ try{
+   const config=await fetch("/api/config",{cache:"no-store"}).then(r=>r.json());
+   if(!config.configured)return;
+   db=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
+   remoteMode=true;
+   document.querySelector(".status").textContent="Supabase conectado";
+   const {data:{session}}=await db.auth.getSession();
+   if(!session)document.getElementById("authGate").classList.add("show");
+   else await loadRemoteProducts();
+   db.auth.onAuthStateChange(async(event,session)=>{
+     document.getElementById("authGate").classList.toggle("show",!session);
+     if(session)await loadRemoteProducts();
+   });
+ }catch(error){console.warn("Modo demostración:",error.message)}
+}
+document.getElementById("loginForm").onsubmit=async e=>{
+ e.preventDefault();const out=document.getElementById("authError");out.textContent="";
+ const {error}=await db.auth.signInWithPassword({email:document.getElementById("loginEmail").value,password:document.getElementById("loginPassword").value});
+ if(error)out.textContent="No pudimos ingresar: "+error.message;
+};
+initializeBackend();
 </script>
 </body>
 </html>
