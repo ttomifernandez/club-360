@@ -1184,6 +1184,25 @@
             height: 22px;
         }
 
+        .checkout-modal { border: 0; padding: 0; width: min(560px, calc(100% - 28px)); border-radius: 1.5rem; box-shadow: 0 30px 90px rgba(0,0,0,.28); }
+        .checkout-modal::backdrop { background: rgba(2,44,34,.65); backdrop-filter: blur(4px); }
+        .checkout-head { padding: 1.4rem 1.5rem; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; justify-content: space-between; }
+        .checkout-head h3 { font-family: var(--font-display); font-size: 1.35rem; }
+        .checkout-form { padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .checkout-field { display: grid; gap: .45rem; }
+        .checkout-field.full { grid-column: 1 / -1; }
+        .checkout-field label { font-size: .78rem; font-weight: 800; color: var(--slate-700); }
+        .checkout-field input,.checkout-field textarea { width: 100%; border: 1px solid var(--slate-200); border-radius: .8rem; padding: .85rem; outline: none; font-family: var(--font-body); }
+        .checkout-field input:focus,.checkout-field textarea:focus { border-color: var(--emerald-600); box-shadow: 0 0 0 3px var(--emerald-100); }
+        .checkout-summary { grid-column: 1 / -1; padding: 1rem; background: var(--emerald-50); border-radius: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .checkout-message { grid-column: 1 / -1; min-height: 20px; color: #b33b3b; font-size: .82rem; }
+        .checkout-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .7rem; }
+        .checkout-actions button { border: 1px solid var(--slate-200); border-radius: .8rem; padding: .8rem 1rem; font-weight: 800; background: white; }
+        .checkout-actions .confirm { background: var(--emerald-700); color: white; border-color: var(--emerald-700); }
+        .order-success { padding: 2rem; text-align: center; }
+        .order-success h3 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: .7rem; }
+        @media (max-width: 560px) { .checkout-form { grid-template-columns: 1fr; } .checkout-field.full,.checkout-summary,.checkout-message,.checkout-actions { grid-column: auto; } }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .products-grid {
@@ -1376,15 +1395,31 @@
                 <span>Total estimado</span>
                 <strong id="cartTotal">$0</strong>
             </div>
-            <p class="cart-note">El precio final de socio se confirma al finalizar por WhatsApp. Envío a coordinar.</p>
+            <p class="cart-note">Confirmá tus datos y registrá el pedido. El pago y el envío se coordinan a continuación.</p>
             <button class="cart-checkout" id="cartCheckout" disabled>
                 <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16 0C7.16344 0 0 7.16344 0 16C0 19.0832 0.87325 21.9631 2.3855 24.4091L0 32L7.82869 29.5446C10.2796 31.1147 13.0645 32 16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0ZM23.4974 21.6033C23.1873 22.4766 21.8415 23.2307 20.8402 23.4479C20.1479 23.595 19.2458 23.7042 16.1953 22.4419C12.3015 20.831 9.77125 16.8906 9.57725 16.6346C9.38944 16.3786 8.00031 14.5369 8.00031 12.6288C8.00031 10.7208 8.96919 9.79463 9.35625 9.39494C9.67306 9.06825 10.19 8.91031 10.6934 8.91031C10.8549 8.91031 11.0031 8.91681 11.1384 8.92325C11.5385 8.94263 11.7386 8.96856 12.0033 9.60106C12.3323 10.3951 13.1328 12.3444 13.2294 12.5442C13.326 12.7441 13.4227 13.0154 13.2874 13.2801C13.1585 13.5513 13.0425 13.6741 12.8485 13.9001C12.6545 14.126 12.4673 14.3005 12.2674 14.5458C12.0868 14.7588 11.8866 14.9848 12.1124 15.3721C12.3382 15.7594 13.1194 17.0315 14.2685 18.0579C15.7523 19.3813 16.9531 19.8009 17.4049 19.9881C17.7404 20.1302 18.1406 20.1043 18.3858 19.8396C18.6891 19.5106 19.0635 18.9684 19.4379 18.4455C19.7024 18.0776 20.0315 18.026 20.3736 18.1551C20.7221 18.2778 22.5815 19.1945 22.956 19.3817C23.3305 19.5689 23.5822 19.6593 23.6725 19.8143C23.7629 19.9693 23.7629 20.7303 23.4974 21.6033Z" />
                 </svg>
-                Finalizar pedido por WhatsApp
+                Continuar pedido
             </button>
         </div>
     </aside>
+    <dialog class="checkout-modal" id="checkoutModal">
+        <div id="checkoutContent">
+            <div class="checkout-head"><h3>Finalizar pedido</h3><button class="cart-close" id="checkoutClose" type="button" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></div>
+            <form class="checkout-form" id="checkoutForm">
+                <div class="checkout-field"><label>Nombre y apellido</label><input id="customerName" required autocomplete="name"></div>
+                <div class="checkout-field"><label>WhatsApp</label><input id="customerPhone" required inputmode="tel" autocomplete="tel"></div>
+                <div class="checkout-field full"><label>Email (opcional)</label><input id="customerEmail" type="email" autocomplete="email"></div>
+                <div class="checkout-field"><label>Cupón (opcional)</label><input id="couponCode" autocomplete="off" style="text-transform:uppercase"></div>
+                <div class="checkout-field"><label>Localidad</label><input id="customerCity" required autocomplete="address-level2" value="Córdoba"></div>
+                <div class="checkout-field full"><label>Notas del pedido</label><textarea id="customerNotes" rows="3" placeholder="Color, medida, entrega u otra aclaración"></textarea></div>
+                <div class="checkout-summary"><span>Total antes del cupón</span><strong id="checkoutTotal">$0</strong></div>
+                <div class="checkout-message" id="checkoutMessage"></div>
+                <div class="checkout-actions"><button type="button" id="checkoutCancel">Volver</button><button class="confirm" id="confirmOrder" type="submit">Confirmar pedido</button></div>
+            </form>
+        </div>
+    </dialog>
 
     <!-- WHATSAPP FLOTANTE -->
     <a href="https://wa.me/5493515929043?text=%C2%A1Hola!%20Vi%20el%20cat%C3%A1logo%20de%20Bienestar%20Rural%20369%20y%20me%20gustar%C3%ADa%20m%C3%A1s%20informaci%C3%B3n."
@@ -1399,6 +1434,7 @@
     <script>
         // ===== DATOS DE PRODUCTOS =====
         const WA_NUMBER = "5493515929043";
+        let storeDb = null;
 
         let PRODUCTS = [
             {
@@ -1649,17 +1685,42 @@
         cartOverlay.addEventListener("click", closeCart);
         document.addEventListener("keydown", e => { if (e.key === "Escape") closeCart(); });
 
-        // ===== CHECKOUT WHATSAPP =====
-        cartCheckout.addEventListener("click", () => {
-            if (cart.size === 0) return;
+        // ===== CHECKOUT Y PEDIDO =====
+        const checkoutModal = document.getElementById("checkoutModal");
+        const checkoutForm = document.getElementById("checkoutForm");
+        const checkoutMessage = document.getElementById("checkoutMessage");
+        function whatsappOrder(orderNumber="") {
             let msg = "¡Hola! Vi el catálogo de Bienestar Rural 369 y quiero hacer este pedido:\n\n";
             cart.forEach((qty, id) => {
                 const p = PRODUCTS.find(x => x.id === id);
                 if (p) msg += `• ${qty}x ${p.title} — ${fmt(p.price)} c/u\n`;
             });
-            msg += `\nTotal estimado: ${fmt(totalPrice())}\n\n¿Me confirman precio de socio y disponibilidad? ¡Gracias!`;
+            if(orderNumber) msg += `\nPedido registrado: #${orderNumber}\n`;
+            msg += `\nTotal estimado: ${fmt(totalPrice())}\n\n¿Me confirman disponibilidad, pago y entrega? ¡Gracias!`;
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+        }
+        cartCheckout.addEventListener("click", () => {
+            if (cart.size === 0) return;
+            document.getElementById("checkoutTotal").textContent=fmt(totalPrice());
+            checkoutMessage.textContent="";
+            checkoutModal.showModal();
         });
+        document.getElementById("checkoutClose").onclick=()=>checkoutModal.close();
+        document.getElementById("checkoutCancel").onclick=()=>checkoutModal.close();
+        checkoutForm.onsubmit=async event=>{
+            event.preventDefault();const button=document.getElementById("confirmOrder");checkoutMessage.textContent="";
+            if(!storeDb){checkoutModal.close();whatsappOrder();return}
+            const items=[...cart.entries()].map(([slug,quantity])=>{const p=PRODUCTS.find(x=>x.id===slug);return {product_id:p?.dbId,quantity}}).filter(x=>x.product_id);
+            if(items.length!==cart.size){checkoutMessage.textContent="Actualizá la página antes de confirmar el pedido.";return}
+            button.disabled=true;button.textContent="Registrando…";
+            const notes=[document.getElementById("customerCity").value.trim(),document.getElementById("customerNotes").value.trim()].filter(Boolean).join(" · ");
+            const {data,error}=await storeDb.rpc("place_order",{p_customer_name:document.getElementById("customerName").value.trim(),p_customer_email:document.getElementById("customerEmail").value.trim()||null,p_customer_phone:document.getElementById("customerPhone").value.trim(),p_coupon_code:document.getElementById("couponCode").value.trim().toUpperCase()||null,p_items:items,p_notes:notes||null});
+            button.disabled=false;button.textContent="Confirmar pedido";
+            if(error){checkoutMessage.textContent=error.message.includes("place_order")?"El checkout está listo, pero falta activar la función de pedidos en Supabase.":error.message;return}
+            const order=Array.isArray(data)?data[0]:data;const orderNumber=order?.order_number;
+            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp.</p><button class="cart-checkout" id="continueWhatsapp" style="margin-top:1.2rem">Continuar por WhatsApp</button></div>`;
+            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber);cart.clear();saveCart();renderCart();
+        };
 
         // ===== BOTÓN "QUIERO CONOCER MÁS" =====
         document.getElementById("clubBtn").addEventListener("click", e => {
@@ -1710,12 +1771,13 @@
             try {
                 const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
                 if (!config.configured || !window.supabase) return;
-                const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-                const { data, error } = await client.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
+                storeDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+                const { data, error } = await storeDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
                 if (error) throw error;
                 if (!data?.length) return;
                 PRODUCTS = data.map(p => ({
                     id: p.slug,
+                    dbId: p.id,
                     cat: p.categories?.slug || p.category_id,
                     catLabel: p.categories?.name || p.category_id,
                     tag: { text: p.metadata?.tag || p.categories?.name || "", cls: "" },
