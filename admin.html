@@ -64,7 +64,11 @@
       <section class="view" id="categories"><div class="intro"><div><h2>Categorías</h2><p>Organizá las dos líneas de productos con libertad.</p></div><button class="btn primary" id="newCategory">+ Nueva categoría</button></div><div class="panel"><div class="panel-head"><h3>Categorías</h3></div><div id="categoryList"></div></div></section>
       <section class="view" id="orders"><div class="intro"><div><h2>Pedidos y ventas</h2><p>Seguimiento operativo de cada compra.</p></div></div><div class="notice" id="ordersNotice">El listado ya está listo. Los pedidos aparecerán al activar el checkout público.</div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="orderRows"></tbody></table></div></div></section>
       <section class="view" id="coupons"><div class="intro"><div><h2>Cupones</h2><p>Descuentos con vigencia y límites de uso.</p></div><button class="btn primary" id="newCoupon">+ Nuevo cupón</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Descuento</th><th>Vigencia</th><th>Usos</th><th>Estado</th><th></th></tr></thead><tbody id="couponRows"></tbody></table></div></div></section>
-      <section class="view" id="users"><div class="panel placeholder"><div class="big">♙</div><h3>Usuarios y permisos</h3><p>Se activará junto con Supabase Auth: propietario, operador, catálogo, atención y auditor, con permisos aplicados en la base de datos.</p></div></section>
+      <section class="view" id="users">
+        <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div></div>
+        <div class="notice show" id="usersNotice">Para sumar un usuario nuevo: invitalo desde Supabase (Authentication → Users → Invite user). Cuando acepte la invitación va a aparecer acá como "Sin activar", y desde esta tabla le asignás rol y acceso.</div>
+        <div class="panel"><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Acceso</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div></div>
+      </section>
     </div>
   </main>
 </div>
@@ -118,6 +122,19 @@
     <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
   </form>
 </dialog>
+<dialog id="userModal">
+  <form method="dialog" id="userForm">
+    <div class="modal-head"><h3>Editar usuario</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="form">
+      <input type="hidden" id="userId">
+      <div class="field full"><label>Nombre</label><input id="userFullName" required></div>
+      <div class="field"><label>Rol</label><select id="userRoleSelect"><option value="owner">Propietario</option><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support">Atención</option><option value="auditor">Auditor</option></select></div>
+      <label class="check full"><input id="userActive" type="checkbox"> Acceso al panel habilitado</label>
+      <span class="field-hint" style="grid-column:1/-1" id="userSelfHint"></span>
+    </div>
+    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar usuario</button></div>
+  </form>
+</dialog>
 <dialog id="couponModal">
   <form method="dialog" id="couponForm">
     <div class="modal-head"><h3 id="couponModalTitle">Nuevo cupón</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
@@ -144,6 +161,10 @@ let products=load();
 let categories=[];
 let coupons=[];
 let orders=[];
+let profilesList=[];
+let currentRole=null;
+let currentUserId=null;
+const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor"};
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 function load(){try{const x=JSON.parse(localStorage.getItem(STORAGE));return Array.isArray(x)&&x.length?x:structuredClone(seed)}catch{return structuredClone(seed)}}
@@ -175,15 +196,23 @@ async function loadRemoteProducts(){
  if(error)throw error;
  products=(data||[]).map(fromDbProduct);localStorage.removeItem(STORAGE);render();
 }
+let accessNotified=false;
 async function loadRemoteAdminData(){
- const [catResult,couponResult,orderResult]=await Promise.all([
+ const [catResult,couponResult,orderResult,profileResult]=await Promise.all([
    db.from("categories").select("*").order("sort_order"),
    db.from("coupons").select("*").order("code"),
-   db.from("orders").select("*").order("created_at",{ascending:false})
+   db.from("orders").select("*").order("created_at",{ascending:false}),
+   db.from("profiles").select("*").order("created_at")
  ]);
- if(catResult.error)throw catResult.error;if(couponResult.error)throw couponResult.error;if(orderResult.error)throw orderResult.error;
- categories=catResult.data||[];coupons=couponResult.data||[];orders=orderResult.data||[];
- renderCategories();renderCoupons();renderOrders();
+ if(catResult.error)throw catResult.error;
+ categories=catResult.data||[];
+ // Las tablas que el rol no puede leer no rompen el panel: se muestran vacías.
+ const denied=[];
+ if(couponResult.error){coupons=[];denied.push("cupones")}else coupons=couponResult.data||[];
+ if(orderResult.error){orders=[];denied.push("pedidos")}else orders=orderResult.data||[];
+ profilesList=profileResult.error?[]:(profileResult.data||[]);
+ renderCategories();renderCoupons();renderOrders();renderUsers();
+ if(denied.length&&!accessNotified){accessNotified=true;toast("Tu rol no tiene acceso a: "+denied.join(", "),4000)}
 }
 function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button><button data-delete="${p.id}" title="Eliminar">⌫</button></div></td>`:""}</tr>`}
 function render(){
@@ -192,7 +221,7 @@ function render(){
  document.getElementById("stockCount").textContent=products.reduce((t,p)=>t+Number(p.stock),0);
  const low=products.filter(p=>p.stock<=3).length;document.getElementById("lowStock").textContent=low?`${low} con stock bajo`:"Sin alertas";
  document.getElementById("recentRows").innerHTML=products.slice(0,5).map(p=>productRow(p)).join("");
- renderProducts();renderCategories();
+ renderProducts();renderCategories();renderUsers();
 }
 function renderProducts(){
  const q=document.getElementById("productSearch").value.toLowerCase();
@@ -217,6 +246,33 @@ function renderOrders(){
  document.getElementById("ordersNotice").classList.toggle("show",!orders.length);
  document.getElementById("orderRows").innerHTML=orders.length?orders.map(o=>`<tr><td><button data-order-view="${o.id}" style="border:0;background:none;color:var(--green);font-weight:800">#${o.order_number}</button></td><td>${escapeHtml(o.customer_name)}<br><small>${escapeHtml(o.customer_phone)}</small></td><td>${shortDate(o.created_at)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${labels[o.status]||o.status}</span></td><td><select data-order-status="${o.id}">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${value===o.status?"selected":""}>${label}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay pedidos.</td></tr>`;
 }
+function renderUsers(){
+ const isOwner=currentRole==="owner";
+ document.getElementById("usersNotice").classList.toggle("show",isOwner);
+ document.getElementById("userRows").innerHTML=profilesList.length?profilesList.map(u=>`<tr><td><strong>${escapeHtml(u.full_name)}</strong><br><small>${escapeHtml(u.id.slice(0,8))}…</small></td><td>${ROLE_LABELS[u.role]||escapeHtml(u.role)}</td><td>${shortDate(u.created_at)}</td><td><span class="pill ${u.active?"":"off"}">${u.active?"Habilitado":"Sin activar"}</span></td><td>${isOwner?`<div class="row-actions"><button data-user-edit="${u.id}" title="Editar">✎</button></div>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin usuarios visibles para tu rol.</td></tr>`;
+}
+function openUserModal(id){
+ const u=profilesList.find(x=>x.id===id);if(!u)return;
+ document.getElementById("userId").value=u.id;
+ document.getElementById("userFullName").value=u.full_name||"";
+ document.getElementById("userRoleSelect").value=u.role;
+ document.getElementById("userActive").checked=u.active;
+ const self=u.id===currentUserId;
+ document.getElementById("userRoleSelect").disabled=self;
+ document.getElementById("userActive").disabled=self;
+ document.getElementById("userSelfHint").textContent=self?"No podés cambiar tu propio rol ni deshabilitar tu propio acceso.":"";
+ document.getElementById("userModal").showModal();
+}
+document.getElementById("userRows").onclick=e=>{const b=e.target.closest("[data-user-edit]");if(b)openUserModal(b.dataset.userEdit)};
+document.getElementById("userForm").onsubmit=async e=>{
+ e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("userModal").close();return}
+ const id=document.getElementById("userId").value;
+ const row={full_name:document.getElementById("userFullName").value.trim()};
+ if(!document.getElementById("userRoleSelect").disabled){row.role=document.getElementById("userRoleSelect").value;row.active=document.getElementById("userActive").checked}
+ const {error}=await db.from("profiles").update(row).eq("id",id);
+ if(error)return toast("No se pudo guardar: "+error.message,4000);
+ document.getElementById("userModal").close();await loadRemoteAdminData();toast("Usuario actualizado");
+};
 function openModal(id){
  const p=products.find(x=>x.id===id);document.getElementById("modalTitle").textContent=p?"Editar producto":"Nuevo producto";document.getElementById("editingId").value=p?.id||"";
  ["title","cat","priceOld","price","stock","img","desc"].forEach(k=>document.getElementById(k).value=p?.[k]??"");
@@ -347,11 +403,12 @@ async function activateSession(session){
  const {data:profile,error}=await db.from("profiles").select("full_name,role,active").eq("id",session.user.id).maybeSingle();
  if(error)throw new Error("No pudimos verificar tu perfil: "+error.message);
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
+ currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
  await Promise.all([loadRemoteProducts(),loadRemoteAdminData()]);
  startOrderWatch();
 }
-function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch()}
+function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;profilesList=[];accessNotified=false}
 document.getElementById("logoutBtn").onclick=async()=>{document.getElementById("logoutBtn").disabled=true;await db.auth.signOut();document.getElementById("logoutBtn").disabled=false;toast("Sesión cerrada")};
 document.getElementById("loginForm").onsubmit=async e=>{
  e.preventDefault();const out=document.getElementById("authError");out.textContent="";
