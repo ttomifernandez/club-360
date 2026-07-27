@@ -784,6 +784,26 @@
             box-shadow: 0 6px 15px rgba(5, 150, 105, 0.25);
         }
 
+        .product-btn:disabled {
+            background: var(--slate-200);
+            color: var(--slate-400);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .product-card.sold-out .product-img img {
+            filter: grayscale(0.85);
+            opacity: 0.7;
+        }
+
+        .product-tag.out {
+            background: rgba(15, 23, 42, 0.85);
+            top: auto;
+            bottom: 1rem;
+            left: 1rem;
+        }
+
         .product-btn .material-symbols-outlined {
             font-size: 18px;
         }
@@ -1542,6 +1562,15 @@
         }
 
         const fmt = n => "$" + n.toLocaleString("es-AR");
+        const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+
+        // Stock: si el producto no informa stock (catálogo local), se asume ilimitado.
+        function stockOf(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            const s = Number(p?.stock);
+            return Number.isFinite(s) ? s : Infinity;
+        }
+        const soldOut = p => Number.isFinite(Number(p.stock)) && Number(p.stock) <= 0;
 
         // ===== SCROLL ANIMATIONS =====
         const observer = new IntersectionObserver(entries => {
@@ -1564,12 +1593,15 @@
               const card = document.createElement("article");
               card.className = "product-card animate-on-scroll " + delays[i % 3];
               if (activeFilter !== "all" && p.cat !== activeFilter) card.classList.add("hidden");
+              if (soldOut(p)) card.classList.add("sold-out");
               card.dataset.cat = p.cat;
               card.innerHTML = `
                 <div class="product-img">
                     <span class="product-tag ${p.tag.cls}">${p.tag.text}</span>
                     <img src="${p.img}" alt="${p.title}" loading="lazy" width="800" height="600">
-                    <span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${p.discount}</span>
+                    ${soldOut(p)
+                        ? `<span class="product-tag out"><span class="material-symbols-outlined">block</span> Agotado</span>`
+                        : `<span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${p.discount}</span>`}
                 </div>
                 <div class="product-body">
                     <div class="product-cat">${p.catLabel}</div>
@@ -1581,8 +1613,8 @@
                             <span class="price-value">${fmt(p.price)}</span>
                             <span class="price-label">Precio socio</span>
                         </div>
-                        <button class="product-btn" data-add="${p.id}">
-                            <span class="material-symbols-outlined">add_shopping_cart</span> Agregar
+                        <button class="product-btn" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>
+                            <span class="material-symbols-outlined">${soldOut(p) ? "block" : "add_shopping_cart"}</span> ${soldOut(p) ? "Agotado" : "Agregar"}
                         </button>
                     </div>
                 </div>`;
@@ -1603,7 +1635,9 @@
             try {
                 const raw = JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
                 raw.forEach(([id, qty]) => {
-                    if (PRODUCTS.some(p => p.id === id) && qty > 0) cart.set(id, qty);
+                    if (!PRODUCTS.some(p => p.id === id)) return;
+                    const q = Math.min(qty, stockOf(id));
+                    if (q > 0) cart.set(id, q);
                 });
             } catch (e) { /* ignore */ }
         }
@@ -1674,17 +1708,24 @@
         }
 
         function addToCart(id) {
-            cart.set(id, (cart.get(id) || 0) + 1);
+            const qty = cart.get(id) || 0;
+            if (qty + 1 > stockOf(id)) return false;
+            cart.set(id, qty + 1);
             renderCart();
+            return true;
         }
 
         // ===== DELEGACIÓN DE EVENTOS =====
         grid.addEventListener("click", e => {
             const btn = e.target.closest("[data-add]");
-            if (!btn) return;
-            addToCart(btn.dataset.add);
-            btn.classList.add("added");
-            btn.innerHTML = '<span class="material-symbols-outlined">check</span> Agregado';
+            if (!btn || btn.disabled) return;
+            const added = addToCart(btn.dataset.add);
+            if (added) {
+                btn.classList.add("added");
+                btn.innerHTML = '<span class="material-symbols-outlined">check</span> Agregado';
+            } else {
+                btn.innerHTML = '<span class="material-symbols-outlined">production_quantity_limits</span> Sin stock';
+            }
             setTimeout(() => {
                 btn.classList.remove("added");
                 btn.innerHTML = '<span class="material-symbols-outlined">add_shopping_cart</span> Agregar';
@@ -1695,7 +1736,10 @@
             const inc = e.target.closest("[data-inc]");
             const dec = e.target.closest("[data-dec]");
             const rm = e.target.closest("[data-rm]");
-            if (inc) { cart.set(inc.dataset.inc, cart.get(inc.dataset.inc) + 1); renderCart(); }
+            if (inc) {
+                const id = inc.dataset.inc;
+                if (cart.get(id) + 1 <= stockOf(id)) { cart.set(id, cart.get(id) + 1); renderCart(); }
+            }
             else if (dec) {
                 const id = dec.dataset.dec;
                 const q = cart.get(id) - 1;
@@ -1789,15 +1833,28 @@
         menuBtn.addEventListener("click", () => mobileMenu.classList.toggle("open"));
         mobileMenu.querySelectorAll("a").forEach(a => a.addEventListener("click", () => mobileMenu.classList.remove("open")));
 
-        // ===== FILTROS POR CATEGORÍA =====
-        document.querySelectorAll(".filter-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                const f = btn.dataset.filter;
-                document.querySelectorAll(".product-card").forEach(card => {
-                    card.classList.toggle("hidden", f !== "all" && card.dataset.cat !== f);
-                });
+        // ===== FILTROS POR CATEGORÍA (generados desde el catálogo) =====
+        const filterBar = document.querySelector(".filters");
+
+        function renderFilters() {
+            const current = filterBar.querySelector(".filter-btn.active")?.dataset.filter || "all";
+            const cats = new Map();
+            PRODUCTS.forEach(p => { if (p.cat && !cats.has(p.cat)) cats.set(p.cat, p.catLabel || p.cat); });
+            const active = current === "all" || cats.has(current) ? current : "all";
+            filterBar.innerHTML = `<button class="filter-btn${active === "all" ? " active" : ""}" data-filter="all">Todos</button>` +
+                [...cats.entries()].map(([slug, label]) =>
+                    `<button class="filter-btn${active === slug ? " active" : ""}" data-filter="${esc(slug)}">${esc(label)}</button>`
+                ).join("");
+        }
+
+        filterBar.addEventListener("click", e => {
+            const btn = e.target.closest(".filter-btn");
+            if (!btn) return;
+            filterBar.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const f = btn.dataset.filter;
+            document.querySelectorAll(".product-card").forEach(card => {
+                card.classList.toggle("hidden", f !== "all" && card.dataset.cat !== f);
             });
         });
 
@@ -1805,6 +1862,7 @@
         document.querySelectorAll(".animate-on-scroll").forEach(el => observer.observe(el));
 
         // ===== INIT =====
+        renderFilters();
         loadCart();
         renderCart();
         async function loadSharedCatalog() {
@@ -1833,6 +1891,11 @@
                 [...cart.keys()].forEach(id => {
                     if (!PRODUCTS.some(product => product.id === id)) cart.delete(id);
                 });
+                cart.forEach((qty, id) => {
+                    const available = stockOf(id);
+                    if (qty > available) { if (available > 0) cart.set(id, available); else cart.delete(id); }
+                });
+                renderFilters();
                 renderCatalog();
                 renderCart();
             } catch (error) {
