@@ -16,7 +16,9 @@ declare
   v_order public.orders%rowtype;
   v_item record;
 begin
-  if public.current_role() not in ('owner', 'operator') then
+  -- coalesce: current_role() es NULL para anon o perfiles inactivos y
+  -- "NULL not in (...)" no dispara la excepción.
+  if coalesce(public.current_role()::text, '') not in ('owner', 'operator') then
     raise exception 'No tenés permisos para actualizar pedidos.';
   end if;
 
@@ -62,5 +64,7 @@ begin
 end;
 $$;
 
-revoke all on function public.set_order_status(uuid, public.order_status) from public;
+-- Supabase otorga EXECUTE a anon/authenticated por default privileges;
+-- hay que revocar anon explícitamente, no alcanza con public.
+revoke all on function public.set_order_status(uuid, public.order_status) from public, anon;
 grant execute on function public.set_order_status(uuid, public.order_status) to authenticated;
