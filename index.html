@@ -1543,15 +1543,27 @@
 
         const fmt = n => "$" + n.toLocaleString("es-AR");
 
+        // ===== SCROLL ANIMATIONS =====
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15, rootMargin: "0px 0px -50px 0px" });
+
         // ===== RENDER DE PRODUCTOS =====
         const grid = document.getElementById("productsGrid");
         const delays = ["delay-1", "delay-2", "delay-3"];
 
         function renderCatalog() {
           grid.innerHTML = "";
+          const activeFilter = document.querySelector(".filter-btn.active")?.dataset.filter || "all";
           PRODUCTS.forEach((p, i) => {
               const card = document.createElement("article");
               card.className = "product-card animate-on-scroll " + delays[i % 3];
+              if (activeFilter !== "all" && p.cat !== activeFilter) card.classList.add("hidden");
               card.dataset.cat = p.cat;
               card.innerHTML = `
                 <div class="product-img">
@@ -1575,6 +1587,7 @@
                     </div>
                 </div>`;
               grid.appendChild(card);
+              observer.observe(card);
           });
         }
         renderCatalog();
@@ -1708,14 +1721,20 @@
         const checkoutForm = document.getElementById("checkoutForm");
         const checkoutMessage = document.getElementById("checkoutMessage");
         let catalogPromise = Promise.resolve();
-        function whatsappOrder(orderNumber="") {
+        function cartSnapshot() {
+            return {
+                items: [...cart.entries()].map(([id, qty]) => ({ qty, p: PRODUCTS.find(x => x.id === id) })).filter(x => x.p),
+                total: totalPrice()
+            };
+        }
+        function whatsappOrder(orderNumber="", snapshot=null) {
+            const order = snapshot || cartSnapshot();
             let msg = "¡Hola! Vi el catálogo de Bienestar Rural 369 y quiero hacer este pedido:\n\n";
-            cart.forEach((qty, id) => {
-                const p = PRODUCTS.find(x => x.id === id);
-                if (p) msg += `• ${qty}x ${p.title} — ${fmt(p.price)} c/u\n`;
+            order.items.forEach(({ qty, p }) => {
+                msg += `• ${qty}x ${p.title} — ${fmt(p.price)} c/u\n`;
             });
             if(orderNumber) msg += `\nPedido registrado: #${orderNumber}\n`;
-            msg += `\nTotal estimado: ${fmt(totalPrice())}\n\n¿Me confirman disponibilidad, pago y entrega? ¡Gracias!`;
+            msg += `\nTotal estimado: ${fmt(order.total)}\n\n¿Me confirman disponibilidad, pago y entrega? ¡Gracias!`;
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
         }
         cartCheckout.addEventListener("click", () => {
@@ -1744,8 +1763,11 @@
             button.disabled=false;button.textContent="Confirmar pedido";
             if(error){checkoutMessage.textContent=error.message.includes("place_order")?"El checkout está listo, pero falta activar la función de pedidos en Supabase.":error.message;return}
             const order=Array.isArray(data)?data[0]:data;const orderNumber=order?.order_number;
-            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp.</p><button class="cart-checkout" id="continueWhatsapp" style="margin-top:1.2rem">Continuar por WhatsApp</button></div>`;
-            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber);cart.clear();saveCart();renderCart();
+            const snapshot=cartSnapshot();
+            if(order?.total!=null)snapshot.total=Number(order.total);
+            const discount=Number(order?.discount||0);
+            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp.</p>${discount>0?`<p><strong>Descuento aplicado: −${fmt(discount)}</strong></p>`:""}<p><strong>Total: ${fmt(snapshot.total)}</strong></p><button class="cart-checkout" id="continueWhatsapp" style="margin-top:1.2rem">Continuar por WhatsApp</button></div>`;
+            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber,snapshot);cart.clear();saveCart();renderCart();
         };
 
         // ===== BOTÓN "QUIERO CONOCER MÁS" =====
@@ -1779,15 +1801,7 @@
             });
         });
 
-        // ===== SCROLL ANIMATIONS =====
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add("visible");
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.15, rootMargin: "0px 0px -50px 0px" });
+        // ===== SCROLL ANIMATIONS (elementos estáticos) =====
         document.querySelectorAll(".animate-on-scroll").forEach(el => observer.observe(el));
 
         // ===== INIT =====

@@ -255,7 +255,8 @@ document.getElementById("productForm").onsubmit=async e=>{
    if(file){status.textContent="Subiendo foto…";imageUrl=await uploadProductImage(file,id)}
    if(!imageUrl)throw new Error("Elegí una foto o ingresá una URL.");
  }catch(error){status.textContent=error.message;submit.disabled=false;return}
- const data={id,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:{text:category,cls:""},discount:"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,active:document.getElementById("active").checked};
+ const existing=oldId?products.find(x=>x.id===oldId):null;
+ const data={id,dbId:existing?.dbId,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:existing?.tag||{text:category,cls:""},discount:existing?.discount??"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,active:document.getElementById("active").checked};
  const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado",data);document.getElementById("productModal").close();
  submit.disabled=false;
 };
