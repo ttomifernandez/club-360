@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Panel | Bienestar Rural 369</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#17211d;--muted:#66716b;--line:#e5e9e6;--paper:#f4f6f4;--card:#fff;--green:#174f3d;--green2:#24765b;--soft:#e8f1ed;--gold:#c4934b;--danger:#b33b3b;--shadow:0 14px 40px rgba(28,45,37,.08)}
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:"DM Sans",sans-serif} button,input,select,textarea{font:inherit} button{cursor:pointer}
+    .shell{min-height:100vh;display:grid;grid-template-columns:248px 1fr}.sidebar{background:#123b2f;color:#fff;padding:26px 18px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+    .brand{display:flex;align-items:center;gap:11px;padding:0 8px 25px}.mark{width:42px;height:42px;border-radius:12px;background:#fff;color:var(--green);display:grid;place-items:center;font:800 13px Manrope}.brand strong{display:block;font:700 14px Manrope}.brand small{color:#acd1c2}
+    .menu-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#78a996;padding:18px 12px 8px}.nav{display:grid;gap:5px}.nav button{border:0;background:transparent;color:#cce0d8;padding:11px 12px;border-radius:10px;text-align:left;display:flex;gap:11px;align-items:center}.nav button:hover,.nav button.active{background:rgba(255,255,255,.1);color:#fff}.icon{width:21px;text-align:center}.sidebar-foot{margin-top:auto;padding:15px 10px;border-top:1px solid rgba(255,255,255,.12)}.sidebar-foot small{display:block;color:#90b8a8;margin-top:3px}
+    main{min-width:0}.topbar{height:78px;background:rgba(255,255,255,.9);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 34px;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}.topbar h1{font:800 20px Manrope;margin:0}.top-actions{display:flex;gap:10px;align-items:center}.status{font-size:12px;color:#815c22;background:#fff6df;border:1px solid #f0d89f;padding:7px 11px;border-radius:99px}
+    .content{padding:30px 34px 60px;max-width:1440px;margin:auto}.intro{display:flex;justify-content:space-between;align-items:end;margin-bottom:24px}.intro h2{font:800 30px Manrope;margin:0 0 5px}.intro p{margin:0;color:var(--muted)}
+    .btn{border:1px solid var(--line);background:#fff;color:var(--ink);padding:10px 15px;border-radius:10px;font-weight:700}.btn:hover{border-color:#b9c4be}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.primary:hover{background:var(--green2)}.btn.danger{color:var(--danger)}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:22px}.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:19px;box-shadow:0 4px 18px rgba(28,45,37,.035)}.stat span{font-size:13px;color:var(--muted)}.stat strong{display:block;font:800 28px Manrope;margin-top:8px}.stat small{color:var(--green2)}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px}.panel-head h3{font:800 16px Manrope;margin:0}.tools{display:flex;gap:9px}.search{border:1px solid var(--line);background:var(--paper);padding:9px 12px;border-radius:9px;min-width:230px;outline:none}.search:focus{border-color:var(--green2)}
+    table{width:100%;border-collapse:collapse}th,td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}th{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:#fafbfa}tbody tr:hover{background:#fbfcfb}.product-cell{display:flex;align-items:center;gap:11px}.thumb{width:45px;height:45px;object-fit:cover;border-radius:9px;background:var(--soft)}.product-cell strong{display:block}.product-cell small{color:var(--muted)}.pill{padding:5px 8px;border-radius:99px;background:var(--soft);color:var(--green);font-size:11px;font-weight:700}.pill.off{background:#f1f1f1;color:#777}.stock.low{color:#a16412;font-weight:700}.row-actions{display:flex;gap:5px}.row-actions button{border:0;background:transparent;padding:7px;border-radius:7px}.row-actions button:hover{background:var(--soft)}
+    .empty{padding:65px 20px;text-align:center;color:var(--muted)}.view{display:none}.view.active{display:block}.placeholder{padding:65px 30px;text-align:center}.placeholder .big{font-size:38px}.placeholder h3{font:800 22px Manrope;margin:12px 0 7px}.placeholder p{max-width:520px;margin:auto;color:var(--muted);line-height:1.6}
+    dialog{border:0;padding:0;border-radius:18px;width:min(620px,calc(100% - 28px));box-shadow:0 30px 90px rgba(0,0,0,.25)}dialog::backdrop{background:rgba(12,24,19,.55);backdrop-filter:blur(3px)}.modal-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-head h3{margin:0;font:800 19px Manrope}.close{border:0;background:var(--paper);width:34px;height:34px;border-radius:9px}.form{padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:grid;gap:7px}.field.full{grid-column:1/-1}.field label{font-size:12px;font-weight:700}.field input,.field select,.field textarea{border:1px solid var(--line);padding:11px 12px;border-radius:9px;outline:none;width:100%}.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px var(--soft)}.field textarea{resize:vertical;min-height:85px}.check{display:flex;align-items:center;gap:9px;font-size:13px}.modal-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px}
+    .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
+    .mobile-head{display:none}
+    @media(max-width:980px){.shell{grid-template-columns:76px 1fr}.sidebar{padding:22px 10px}.brand{padding:0 7px 23px}.brand-copy,.nav span:not(.icon),.menu-label,.sidebar-foot{display:none}.nav button{justify-content:center}.stats{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:680px){.shell{display:block}.sidebar{height:auto;position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;padding:8px}.brand,.menu-label,.sidebar-foot{display:none}.nav{display:flex;justify-content:space-around}.nav button{padding:10px}.nav button span:not(.icon){display:none}.topbar{height:65px;padding:0 17px}.status{display:none}.content{padding:20px 14px 90px}.intro{align-items:flex-start;gap:12px}.intro h2{font-size:23px}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:14px}.stat strong{font-size:22px}.panel-head{align-items:stretch;flex-direction:column}.tools{display:grid;grid-template-columns:1fr auto}.search{min-width:0}.table-wrap{overflow:auto}table{min-width:730px}.form{grid-template-columns:1fr}.field.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="mark">369</span><span class="brand-copy"><strong>Bienestar Rural</strong><small>Panel de gestión</small></span></div>
+    <div class="menu-label">Principal</div>
+    <nav class="nav">
+      <button class="active" data-view="dashboard"><span class="icon">⌂</span><span>Resumen</span></button>
+      <button data-view="products"><span class="icon">▦</span><span>Productos</span></button>
+      <button data-view="categories"><span class="icon">◇</span><span>Categorías</span></button>
+      <button data-view="orders"><span class="icon">▤</span><span>Pedidos</span></button>
+      <button data-view="coupons"><span class="icon">%</span><span>Cupones</span></button>
+      <button data-view="users"><span class="icon">♙</span><span>Usuarios</span></button>
+    </nav>
+    <div class="sidebar-foot"><strong>Propietario</strong><small>Acceso total · 2FA pendiente</small></div>
+  </aside>
+  <main>
+    <header class="topbar"><h1 id="pageTitle">Resumen</h1><div class="top-actions"><span class="status">Modo demostración</span><a class="btn" href="/" target="_blank">Ver tienda ↗</a></div></header>
+    <div class="content">
+      <section class="view active" id="dashboard">
+        <div class="intro"><div><h2>Buen día, Tomás</h2><p>Así está Bienestar Rural 369 hoy.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
+        <div class="stats">
+          <div class="stat"><span>Productos activos</span><strong id="activeCount">0</strong><small>Catálogo publicado</small></div>
+          <div class="stat"><span>Valor de inventario</span><strong id="inventoryValue">$0</strong><small>Según precio de venta</small></div>
+          <div class="stat"><span>Stock total</span><strong id="stockCount">0</strong><small id="lowStock">Sin alertas</small></div>
+          <div class="stat"><span>Pedidos</span><strong>0</strong><small>Se activa con la base de datos</small></div>
+        </div>
+        <div class="panel"><div class="panel-head"><h3>Catálogo reciente</h3><button class="btn" data-view-button="products">Administrar todos</button></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="products">
+        <div class="intro"><div><h2>Productos</h2><p>Precios, stock, descripciones y visibilidad.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
+        <div class="panel"><div class="panel-head"><h3>Todos los productos</h3><div class="tools"><input class="search" id="productSearch" placeholder="Buscar producto…"><button class="btn" id="restoreDemo">Restaurar demo</button></div></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead><tbody id="productRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="categories"><div class="intro"><div><h2>Categorías</h2><p>Organizá las dos líneas de productos con libertad.</p></div></div><div class="panel"><div class="panel-head"><h3>Categorías en uso</h3></div><div id="categoryList"></div></div></section>
+      <section class="view" id="orders"><div class="panel placeholder"><div class="big">▤</div><h3>Pedidos y ventas</h3><p>Esta sección quedará conectada al checkout y a Mercado Pago. Mostrará pagos, estados, clientes, notas internas y envíos.</p></div></section>
+      <section class="view" id="coupons"><div class="panel placeholder"><div class="big">%</div><h3>Cupones</h3><p>Crearemos descuentos por porcentaje o monto, con fecha de vencimiento, límite de usos y productos permitidos.</p></div></section>
+      <section class="view" id="users"><div class="panel placeholder"><div class="big">♙</div><h3>Usuarios y permisos</h3><p>Se activará junto con Supabase Auth: propietario, operador, catálogo, atención y auditor, con permisos aplicados en la base de datos.</p></div></section>
+    </div>
+  </main>
+</div>
+
+<dialog id="productModal">
+  <form method="dialog" id="productForm">
+    <div class="modal-head"><h3 id="modalTitle">Nuevo producto</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="form">
+      <input type="hidden" id="editingId">
+      <div class="field full"><label>Nombre</label><input id="title" required placeholder="Ej. Cinturón de cuero premium"></div>
+      <div class="field"><label>Categoría</label><input id="category" required list="categoryOptions" placeholder="Ej. Cuero premium"><datalist id="categoryOptions"></datalist></div>
+      <div class="field"><label>Identificador de categoría</label><input id="cat" required placeholder="Ej. cuero-premium"></div>
+      <div class="field"><label>Precio de lista</label><input id="priceOld" required type="number" min="0"></div>
+      <div class="field"><label>Precio de venta</label><input id="price" required type="number" min="0"></div>
+      <div class="field"><label>Stock</label><input id="stock" required type="number" min="0" value="1"></div>
+      <div class="field"><label>Imagen (ruta o URL)</label><input id="img" required placeholder="images/producto.jpg"></div>
+      <div class="field full"><label>Descripción</label><textarea id="desc" required></textarea></div>
+      <label class="check full"><input id="active" type="checkbox" checked> Producto visible en la tienda</label>
+    </div>
+    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" id="saveProduct" value="default">Guardar producto</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast">Cambios guardados</div>
+
+<script>
+const STORAGE="br369-products";
+const seed=[
+{id:"mate-imperial",cat:"mates",catLabel:"Mates & Yerberas",tag:{text:"Destacado",cls:""},discount:"-20% Socios",title:"Mate Imperial de Alpaca",desc:"Mate calabaza forrado con virola y base de alpaca cincelada a mano. Incluye bombilla pico de loro.",priceOld:120000,price:96000,stock:8,img:"images/mate-imperial.jpg",active:true},
+{id:"set-yerbera",cat:"mates",catLabel:"Mates & Yerberas",tag:{text:"Set Matero",cls:""},discount:"-25% Socios",title:"Set Yerbera + Azucarera",desc:"Juego matero en cuero vacuno repujado con costura artesanal.",priceOld:95000,price:71250,stock:12,img:"images/set-yerbera.jpg",active:true},
+{id:"cuchillo-ciervo",cat:"cuchillos",catLabel:"Cuchillos",tag:{text:"Edición Limitada",cls:"amber"},discount:"-15% Socios",title:"Cuchillo Mango de Ciervo",desc:"Hoja de acero forjado y mango de asta de ciervo natural.",priceOld:140000,price:119000,stock:3,img:"images/cuchillo-ciervo.jpg",active:true},
+{id:"bolso-cuero",cat:"bolsos",catLabel:"Bolsos de Cuero",tag:{text:"Cuero Premium",cls:""},discount:"-20% Socios",title:"Bolso de Cuero Full Grain",desc:"Cuero vacuno full grain curtido al vegetal y herrajes de bronce.",priceOld:180000,price:144000,stock:5,img:"images/bolso-cuero.jpg",active:true},
+{id:"mochila-cuero",cat:"bolsos",catLabel:"Bolsos de Cuero",tag:{text:"Cuero Premium",cls:""},discount:"-18% Socios",title:"Mochila de Cuero Artesanal",desc:"Mochila de cuero macizo con interior forrado y compartimento para notebook.",priceOld:210000,price:172200,stock:4,img:"images/mochila-cuero.jpg",active:true},
+{id:"combo-matero",cat:"mates",catLabel:"Combo Premium",tag:{text:"Combo",cls:"amber"},discount:"-30% Socios",title:"Combo Matero Completo",desc:"Mate, bombilla, termo y matera de cuero en un solo set de regalo.",priceOld:250000,price:175000,stock:7,img:"images/combo-matero.jpg",active:true}
+];
+let products=load();
+const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
+const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
+function load(){try{const x=JSON.parse(localStorage.getItem(STORAGE));return Array.isArray(x)&&x.length?x:structuredClone(seed)}catch{return structuredClone(seed)}}
+function persist(message="Cambios guardados"){localStorage.setItem(STORAGE,JSON.stringify(products));render();toast(message)}
+function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button><button data-delete="${p.id}" title="Eliminar">⌫</button></div></td>`:""}</tr>`}
+function render(){
+ const active=products.filter(p=>p.active);document.getElementById("activeCount").textContent=active.length;
+ document.getElementById("inventoryValue").textContent=money(products.reduce((t,p)=>t+p.price*p.stock,0));
+ document.getElementById("stockCount").textContent=products.reduce((t,p)=>t+Number(p.stock),0);
+ const low=products.filter(p=>p.stock<=3).length;document.getElementById("lowStock").textContent=low?`${low} con stock bajo`:"Sin alertas";
+ document.getElementById("recentRows").innerHTML=products.slice(0,5).map(p=>productRow(p)).join("");
+ renderProducts();renderCategories();
+}
+function renderProducts(){
+ const q=document.getElementById("productSearch").value.toLowerCase();
+ const list=products.filter(p=>(p.title+" "+p.catLabel).toLowerCase().includes(q));
+ document.getElementById("productRows").innerHTML=list.length?list.map(p=>productRow(p,true)).join(""):`<tr><td colspan="6" class="empty">No encontramos productos.</td></tr>`;
+}
+function renderCategories(){
+ const cats=[...new Map(products.map(p=>[p.cat,{id:p.cat,label:p.catLabel,count:products.filter(x=>x.cat===p.cat).length}])).values()];
+ document.getElementById("categoryOptions").innerHTML=cats.map(c=>`<option value="${escapeHtml(c.label)}">`).join("");
+ document.getElementById("categoryList").innerHTML=cats.length?`<div class="table-wrap"><table><thead><tr><th>Categoría</th><th>Identificador</th><th>Productos</th></tr></thead><tbody>${cats.map(c=>`<tr><td><strong>${escapeHtml(c.label)}</strong></td><td>${escapeHtml(c.id)}</td><td>${c.count}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Todavía no hay categorías.</div>`;
+}
+function openModal(id){
+ const p=products.find(x=>x.id===id);document.getElementById("modalTitle").textContent=p?"Editar producto":"Nuevo producto";document.getElementById("editingId").value=p?.id||"";
+ ["title","cat","priceOld","price","stock","img","desc"].forEach(k=>document.getElementById(k).value=p?.[k]??"");
+ document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
+}
+function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios"};document.getElementById("pageTitle").textContent=labels[id]||"Panel"}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)}
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+document.querySelector("[data-view-button]").onclick=()=>showView("products");
+document.querySelectorAll("[data-new]").forEach(b=>b.onclick=()=>openModal());
+document.getElementById("productSearch").oninput=renderProducts;
+document.getElementById("category").oninput=e=>{if(!document.getElementById("editingId").value)document.getElementById("cat").value=slugify(e.target.value)};
+document.getElementById("productRows").onclick=e=>{
+ const edit=e.target.closest("[data-edit]"),toggle=e.target.closest("[data-toggle]"),del=e.target.closest("[data-delete]");
+ if(edit)openModal(edit.dataset.edit);
+ if(toggle){const p=products.find(x=>x.id===toggle.dataset.toggle);p.active=!p.active;persist(p.active?"Producto publicado":"Producto ocultado")}
+ if(del&&confirm("¿Eliminar este producto del catálogo?")){products=products.filter(x=>x.id!==del.dataset.delete);persist("Producto eliminado")}
+};
+document.getElementById("productForm").onsubmit=e=>{
+ e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("productModal").close();return}const oldId=document.getElementById("editingId").value;const title=document.getElementById("title").value.trim();const category=document.getElementById("category").value.trim();
+ const data={id:oldId||slugify(title)+"-"+Date.now().toString().slice(-4),cat:document.getElementById("cat").value.trim(),catLabel:category,tag:{text:category,cls:""},discount:"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:document.getElementById("img").value.trim(),active:document.getElementById("active").checked};
+ const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado");document.getElementById("productModal").close();
+};
+document.getElementById("restoreDemo").onclick=()=>{if(confirm("¿Restaurar los productos de demostración?")){products=structuredClone(seed);persist("Catálogo restaurado")}};
+render();
+</script>
+</body>
+</html>
