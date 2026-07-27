@@ -1184,7 +1184,18 @@
             height: 22px;
         }
 
-        .checkout-modal { border: 0; padding: 0; width: min(560px, calc(100% - 28px)); border-radius: 1.5rem; box-shadow: 0 30px 90px rgba(0,0,0,.28); }
+        .checkout-modal {
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            border: 0;
+            padding: 0;
+            width: min(560px, calc(100% - 28px));
+            max-height: calc(100dvh - 28px);
+            border-radius: 1.5rem;
+            box-shadow: 0 30px 90px rgba(0,0,0,.28);
+            overflow: auto;
+        }
         .checkout-modal::backdrop { background: rgba(2,44,34,.65); backdrop-filter: blur(4px); }
         .checkout-head { padding: 1.4rem 1.5rem; border-bottom: 1px solid var(--slate-100); display: flex; align-items: center; justify-content: space-between; }
         .checkout-head h3 { font-family: var(--font-display); font-size: 1.35rem; }
@@ -1201,7 +1212,14 @@
         .checkout-actions .confirm { background: var(--emerald-700); color: white; border-color: var(--emerald-700); }
         .order-success { padding: 2rem; text-align: center; }
         .order-success h3 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: .7rem; }
-        @media (max-width: 560px) { .checkout-form { grid-template-columns: 1fr; } .checkout-field.full,.checkout-summary,.checkout-message,.checkout-actions { grid-column: auto; } }
+        @media (max-width: 560px) {
+            .checkout-modal { width: calc(100% - 20px); max-height: calc(100dvh - 20px); border-radius: 1.1rem; }
+            .checkout-head { padding: 1rem 1.1rem; }
+            .checkout-form { grid-template-columns: 1fr; padding: 1.1rem; gap: .85rem; }
+            .checkout-field.full,.checkout-summary,.checkout-message,.checkout-actions { grid-column: auto; }
+            .checkout-actions { display: grid; grid-template-columns: 1fr 1fr; }
+            .checkout-actions button { min-height: 46px; }
+        }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
@@ -1689,6 +1707,7 @@
         const checkoutModal = document.getElementById("checkoutModal");
         const checkoutForm = document.getElementById("checkoutForm");
         const checkoutMessage = document.getElementById("checkoutMessage");
+        let catalogPromise = Promise.resolve();
         function whatsappOrder(orderNumber="") {
             let msg = "¡Hola! Vi el catálogo de Bienestar Rural 369 y quiero hacer este pedido:\n\n";
             cart.forEach((qty, id) => {
@@ -1709,9 +1728,16 @@
         document.getElementById("checkoutCancel").onclick=()=>checkoutModal.close();
         checkoutForm.onsubmit=async event=>{
             event.preventDefault();const button=document.getElementById("confirmOrder");checkoutMessage.textContent="";
+            await catalogPromise;
             if(!storeDb){checkoutModal.close();whatsappOrder();return}
-            const items=[...cart.entries()].map(([slug,quantity])=>{const p=PRODUCTS.find(x=>x.id===slug);return {product_id:p?.dbId,quantity}}).filter(x=>x.product_id);
-            if(items.length!==cart.size){checkoutMessage.textContent="Actualizá la página antes de confirmar el pedido.";return}
+            const invalidIds=[...cart.keys()].filter(id=>!PRODUCTS.some(product=>product.id===id && product.dbId));
+            if(invalidIds.length){
+                invalidIds.forEach(id=>cart.delete(id));
+                renderCart();
+                checkoutMessage.textContent="Actualizamos el carrito porque un producto ya no está disponible. Revisalo e intentá nuevamente.";
+                return;
+            }
+            const items=[...cart.entries()].map(([slug,quantity])=>{const p=PRODUCTS.find(x=>x.id===slug);return {product_id:p.dbId,quantity}});
             button.disabled=true;button.textContent="Registrando…";
             const notes=[document.getElementById("customerCity").value.trim(),document.getElementById("customerNotes").value.trim()].filter(Boolean).join(" · ");
             const {data,error}=await storeDb.rpc("place_order",{p_customer_name:document.getElementById("customerName").value.trim(),p_customer_email:document.getElementById("customerEmail").value.trim()||null,p_customer_phone:document.getElementById("customerPhone").value.trim(),p_coupon_code:document.getElementById("couponCode").value.trim().toUpperCase()||null,p_items:items,p_notes:notes||null});
@@ -1771,10 +1797,11 @@
             try {
                 const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
                 if (!config.configured || !window.supabase) return;
-                storeDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-                const { data, error } = await storeDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
+                const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+                const { data, error } = await remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
                 if (error) throw error;
                 if (!data?.length) return;
+                storeDb = remoteDb;
                 PRODUCTS = data.map(p => ({
                     id: p.slug,
                     dbId: p.id,
@@ -1789,13 +1816,16 @@
                     stock: p.stock,
                     img: p.image_url
                 }));
+                [...cart.keys()].forEach(id => {
+                    if (!PRODUCTS.some(product => product.id === id)) cart.delete(id);
+                });
                 renderCatalog();
                 renderCart();
             } catch (error) {
                 console.warn("Se mantiene el catálogo local.", error.message);
             }
         }
-        loadSharedCatalog();
+        catalogPromise = loadSharedCatalog();
     </script>
 </body>
 
