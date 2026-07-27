@@ -312,16 +312,18 @@ async function initializeBackend(){
    document.querySelector(".status").textContent="Supabase conectado";document.querySelector(".status").classList.add("live");document.getElementById("restoreDemo").hidden=true;
    const {data:{session}}=await db.auth.getSession();
    if(!session)document.getElementById("authGate").classList.add("show");
-   else await activateSession(session);
-   db.auth.onAuthStateChange(async(event,session)=>{
+   else activateSession(session).catch(reportAuthError);
+   db.auth.onAuthStateChange((event,session)=>{
      document.getElementById("authGate").classList.toggle("show",!session);
-     if(session)await activateSession(session);else clearSessionUi();
+     if(session)setTimeout(()=>activateSession(session).catch(reportAuthError),0);else clearSessionUi();
    });
  }catch(error){console.warn("Modo demostración:",error.message)}
 }
+function reportAuthError(error){console.error(error);document.getElementById("authError").textContent=error.message;toast(error.message)}
 async function activateSession(session){
- const {data:profile,error}=await db.from("profiles").select("full_name,role,active").eq("id",session.user.id).single();
- if(error||!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
+ const {data:profile,error}=await db.from("profiles").select("full_name,role,active").eq("id",session.user.id).maybeSingle();
+ if(error)throw new Error("No pudimos verificar tu perfil: "+error.message);
+ if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
  await Promise.all([loadRemoteProducts(),loadRemoteAdminData()]);
 }
