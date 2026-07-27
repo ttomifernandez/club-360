@@ -1395,6 +1395,7 @@
         </svg>
     </a>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // ===== DATOS DE PRODUCTOS =====
         const WA_NUMBER = "5493515929043";
@@ -1492,11 +1493,13 @@
         const grid = document.getElementById("productsGrid");
         const delays = ["delay-1", "delay-2", "delay-3"];
 
-        PRODUCTS.forEach((p, i) => {
-            const card = document.createElement("article");
-            card.className = "product-card animate-on-scroll " + delays[i % 3];
-            card.dataset.cat = p.cat;
-            card.innerHTML = `
+        function renderCatalog() {
+          grid.innerHTML = "";
+          PRODUCTS.forEach((p, i) => {
+              const card = document.createElement("article");
+              card.className = "product-card animate-on-scroll " + delays[i % 3];
+              card.dataset.cat = p.cat;
+              card.innerHTML = `
                 <div class="product-img">
                     <span class="product-tag ${p.tag.cls}">${p.tag.text}</span>
                     <img src="${p.img}" alt="${p.title}" loading="lazy" width="800" height="600">
@@ -1517,8 +1520,10 @@
                         </button>
                     </div>
                 </div>`;
-            grid.appendChild(card);
-        });
+              grid.appendChild(card);
+          });
+        }
+        renderCatalog();
 
         // ===== ESTADO DEL CARRITO =====
         const cart = new Map(); // id -> qty
@@ -1701,6 +1706,34 @@
         // ===== INIT =====
         loadCart();
         renderCart();
+        async function loadSharedCatalog() {
+            try {
+                const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
+                if (!config.configured || !window.supabase) return;
+                const client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+                const { data, error } = await client.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
+                if (error) throw error;
+                if (!data?.length) return;
+                PRODUCTS = data.map(p => ({
+                    id: p.slug,
+                    cat: p.categories?.slug || p.category_id,
+                    catLabel: p.categories?.name || p.category_id,
+                    tag: { text: p.metadata?.tag || p.categories?.name || "", cls: "" },
+                    discount: p.metadata?.discount || "",
+                    title: p.name,
+                    desc: p.description,
+                    priceOld: Number(p.list_price || p.price),
+                    price: Number(p.price),
+                    stock: p.stock,
+                    img: p.image_url
+                }));
+                renderCatalog();
+                renderCart();
+            } catch (error) {
+                console.warn("Se mantiene el catálogo local.", error.message);
+            }
+        }
+        loadSharedCatalog();
     </script>
 </body>
 
