@@ -45,7 +45,7 @@
     <div class="sidebar-foot"><strong>Propietario</strong><small>Acceso total · 2FA pendiente</small></div>
   </aside>
   <main>
-    <header class="topbar"><h1 id="pageTitle">Resumen</h1><div class="top-actions"><span class="status">Conectando…</span><div class="user-chip" id="userChip" hidden><span class="avatar" id="userAvatar">T</span><span class="user-copy"><strong id="userName">Usuario</strong><small id="userRole">—</small></span></div><button class="btn" id="logoutBtn" hidden>Cerrar sesión</button><a class="btn" href="/" target="_blank">Ver tienda ↗</a></div></header>
+    <header class="topbar"><h1 id="pageTitle">Resumen</h1><div class="top-actions"><div class="user-chip" id="userChip" hidden><span class="avatar" id="userAvatar">T</span><span class="user-copy"><strong id="userName">Usuario</strong><small id="userRole">—</small></span></div><button class="btn" id="logoutBtn" hidden>Cerrar sesión</button><a class="btn" href="/" target="_blank">Ver tienda ↗</a></div></header>
     <div class="content">
       <section class="view active" id="dashboard">
         <div class="intro"><div><h2>Buen día, Tomás</h2><p>Así está Bienestar Rural 369 hoy.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
@@ -309,12 +309,13 @@ async function initializeBackend(){
    if(!config.configured)return;
    db=window.supabase.createClient(config.supabaseUrl,config.supabaseAnonKey);
    remoteMode=true;
-   document.querySelector(".status").textContent="Supabase conectado";document.querySelector(".status").classList.add("live");document.getElementById("restoreDemo").hidden=true;
+   document.getElementById("restoreDemo").hidden=true;
    const {data:{session}}=await db.auth.getSession();
    if(!session)document.getElementById("authGate").classList.add("show");
-   else activateSession(session).catch(reportAuthError);
+   else{document.getElementById("logoutBtn").hidden=false;activateSession(session).catch(reportAuthError)}
    db.auth.onAuthStateChange((event,session)=>{
      document.getElementById("authGate").classList.toggle("show",!session);
+     document.getElementById("logoutBtn").hidden=!session;
      if(session)setTimeout(()=>activateSession(session).catch(reportAuthError),0);else clearSessionUi();
    });
  }catch(error){console.warn("Modo demostración:",error.message)}
