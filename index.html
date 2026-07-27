@@ -1869,7 +1869,11 @@
             try {
                 const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
                 if (!config.configured || !window.supabase) return;
-                const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+                // La tienda es siempre anónima: sin persistSession y con storageKey
+                // propio para no levantar la sesión del panel (mismo origen).
+                const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+                    auth: { persistSession: false, autoRefreshToken: false, storageKey: "br369-store-public" }
+                });
                 const { data, error } = await remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
                 if (error) throw error;
                 if (!data?.length) return;
