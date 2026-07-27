@@ -1,6 +1,6 @@
-# Club de Beneficios — Plataforma Agropecuaria 360
+# Bienestar Rural 369
 
-Catálogo web ultrapremium del Club de Beneficios 360: mates y yerberas, bolsos de cuero y cuchillería artesanal con precios especiales para socios.
+Catálogo de productos rurales, mates y cuchillería artesanal junto con una línea de artículos de cuero premium.
 
 ## Características
 
