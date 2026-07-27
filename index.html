@@ -1223,8 +1223,8 @@
         .checkout-field { display: grid; gap: .45rem; }
         .checkout-field.full { grid-column: 1 / -1; }
         .checkout-field label { font-size: .78rem; font-weight: 800; color: var(--slate-700); }
-        .checkout-field input,.checkout-field textarea { width: 100%; border: 1px solid var(--slate-200); border-radius: .8rem; padding: .85rem; outline: none; font-family: var(--font-body); }
-        .checkout-field input:focus,.checkout-field textarea:focus { border-color: var(--emerald-600); box-shadow: 0 0 0 3px var(--emerald-100); }
+        .checkout-field input,.checkout-field textarea,.checkout-field select { width: 100%; border: 1px solid var(--slate-200); border-radius: .8rem; padding: .85rem; outline: none; font-family: var(--font-body); background: white; }
+        .checkout-field input:focus,.checkout-field textarea:focus,.checkout-field select:focus { border-color: var(--emerald-600); box-shadow: 0 0 0 3px var(--emerald-100); }
         .checkout-summary { grid-column: 1 / -1; padding: 1rem; background: var(--emerald-50); border-radius: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .checkout-message { grid-column: 1 / -1; min-height: 20px; color: #b33b3b; font-size: .82rem; }
         .checkout-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .7rem; }
@@ -1451,7 +1451,9 @@
                 <div class="checkout-field full"><label>Email (opcional)</label><input id="customerEmail" type="email" autocomplete="email"></div>
                 <div class="checkout-field"><label>Cupón (opcional)</label><input id="couponCode" autocomplete="off" style="text-transform:uppercase"></div>
                 <div class="checkout-field"><label>Localidad</label><input id="customerCity" required autocomplete="address-level2" value="Córdoba"></div>
-                <div class="checkout-field full"><label>Notas del pedido</label><textarea id="customerNotes" rows="3" placeholder="Color, medida, entrega u otra aclaración"></textarea></div>
+                <div class="checkout-field"><label>Entrega</label><select id="shippingMethod"><option value="envio">Envío a domicilio</option><option value="retiro">Retiro / a coordinar</option></select></div>
+                <div class="checkout-field"><label>Dirección de entrega</label><input id="shippingAddress" placeholder="Calle, número, barrio" autocomplete="street-address"></div>
+                <div class="checkout-field full"><label>Notas del pedido</label><textarea id="customerNotes" rows="3" placeholder="Color, medida u otra aclaración"></textarea></div>
                 <div class="checkout-summary"><span>Total antes del cupón</span><strong id="checkoutTotal">$0</strong></div>
                 <div class="checkout-message" id="checkoutMessage"></div>
                 <div class="checkout-actions"><button type="button" id="checkoutCancel">Volver</button><button class="confirm" id="confirmOrder" type="submit">Confirmar pedido</button></div>
@@ -1777,6 +1779,10 @@
             order.items.forEach(({ qty, p }) => {
                 msg += `• ${qty}x ${p.title} — ${fmt(p.price)} c/u\n`;
             });
+            const shipMethod = document.getElementById("shippingMethod")?.value;
+            const shipAddress = document.getElementById("shippingAddress")?.value.trim();
+            const shipCity = document.getElementById("customerCity")?.value.trim();
+            if (shipMethod) msg += `\nEntrega: ${shipMethod === "envio" ? "Envío a domicilio" : "Retiro / a coordinar"}${shipAddress ? " — " + shipAddress : ""}${shipCity ? ", " + shipCity : ""}\n`;
             if(orderNumber) msg += `\nPedido registrado: #${orderNumber}\n`;
             msg += `\nTotal estimado: ${fmt(order.total)}\n\n¿Me confirman disponibilidad, pago y entrega? ¡Gracias!`;
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
@@ -1800,10 +1806,16 @@
                 checkoutMessage.textContent="Actualizamos el carrito porque un producto ya no está disponible. Revisalo e intentá nuevamente.";
                 return;
             }
+            const shippingMethod=document.getElementById("shippingMethod").value;
+            const shippingAddress=document.getElementById("shippingAddress").value.trim();
+            if(shippingMethod==="envio"&&!shippingAddress){
+                checkoutMessage.textContent="Ingresá la dirección de entrega o elegí \"Retiro / a coordinar\".";
+                return;
+            }
             const items=[...cart.entries()].map(([slug,quantity])=>{const p=PRODUCTS.find(x=>x.id===slug);return {product_id:p.dbId,quantity}});
             button.disabled=true;button.textContent="Registrando…";
             const notes=[document.getElementById("customerCity").value.trim(),document.getElementById("customerNotes").value.trim()].filter(Boolean).join(" · ");
-            const {data,error}=await storeDb.rpc("place_order",{p_customer_name:document.getElementById("customerName").value.trim(),p_customer_email:document.getElementById("customerEmail").value.trim()||null,p_customer_phone:document.getElementById("customerPhone").value.trim(),p_coupon_code:document.getElementById("couponCode").value.trim().toUpperCase()||null,p_items:items,p_notes:notes||null});
+            const {data,error}=await storeDb.rpc("place_order",{p_customer_name:document.getElementById("customerName").value.trim(),p_customer_email:document.getElementById("customerEmail").value.trim()||null,p_customer_phone:document.getElementById("customerPhone").value.trim(),p_coupon_code:document.getElementById("couponCode").value.trim().toUpperCase()||null,p_items:items,p_notes:notes||null,p_shipping_method:shippingMethod==="envio"?"Envío a domicilio":"Retiro / a coordinar",p_shipping_address:shippingAddress||null});
             button.disabled=false;button.textContent="Confirmar pedido";
             if(error){checkoutMessage.textContent=error.message.includes("place_order")?"El checkout está listo, pero falta activar la función de pedidos en Supabase.":error.message;return}
             const order=Array.isArray(data)?data[0]:data;const orderNumber=order?.order_number;
