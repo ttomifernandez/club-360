@@ -1399,7 +1399,7 @@
         // ===== DATOS DE PRODUCTOS =====
         const WA_NUMBER = "5493515929043";
 
-        const PRODUCTS = [
+        let PRODUCTS = [
             {
                 id: "mate-imperial",
                 cat: "mates",
@@ -1473,6 +1473,18 @@
                 img: "images/combo-matero.jpg"
             }
         ];
+
+        // Durante la etapa de construcción, el panel /admin guarda el catálogo
+        // en el navegador. Al conectar Supabase, este origen se reemplaza por
+        // una consulta autenticada sin cambiar la interfaz pública.
+        try {
+            const managedProducts = JSON.parse(localStorage.getItem("br369-products") || "null");
+            if (Array.isArray(managedProducts) && managedProducts.length) {
+                PRODUCTS = managedProducts.filter(product => product.active !== false);
+            }
+        } catch (error) {
+            console.warn("No se pudo leer el catálogo administrado.", error);
+        }
 
         const fmt = n => "$" + n.toLocaleString("es-AR");
 
