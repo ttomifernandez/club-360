@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
     <title>Mates, cuchillos criollos y cuero artesanal | Bienestar Rural 360</title>
     <meta name="description"
         content="Mates artesanales, cuchillería criolla y artículos de cuero premium hechos a mano en Córdoba, Argentina. Comprá online con Mercado Pago o por WhatsApp. Envíos a todo el país.">
@@ -1530,7 +1530,9 @@
         .checkout-field input:focus,.checkout-field textarea:focus,.checkout-field select:focus { border-color: var(--emerald-600); box-shadow: 0 0 0 3px var(--emerald-100); }
         .checkout-summary { grid-column: 1 / -1; padding: 1rem; background: var(--emerald-50); border-radius: 1rem; display: flex; justify-content: space-between; align-items: center; }
         .checkout-message { grid-column: 1 / -1; min-height: 20px; color: #b33b3b; font-size: .82rem; }
-        .checkout-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .7rem; }
+        /* La botonera queda pegada al fondo visible del modal: aunque el
+           teclado del celular tape la mitad, el botón de confirmar se ve. */
+        .checkout-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .7rem; position: sticky; bottom: 0; background: white; padding: .7rem 0 .2rem; border-top: 1px solid var(--slate-100); }
         .checkout-actions button { border: 1px solid var(--slate-200); border-radius: .8rem; padding: .8rem 1rem; font-weight: 800; background: white; }
         .checkout-actions .confirm { background: var(--emerald-700); color: white; border-color: var(--emerald-700); }
         .order-success { padding: 2rem; text-align: center; }
@@ -2364,6 +2366,35 @@
             document.getElementById("checkoutTotal").textContent=fmt(totalPrice());
             checkoutMessage.textContent="";
             checkoutModal.showModal();
+            fitCheckoutToKeyboard();
+        });
+        // En iOS el teclado no achica el viewport: el modal centrado queda
+        // mitad abajo del teclado. Con la VisualViewport API lo encajamos en
+        // la franja realmente visible mientras esté abierto.
+        function fitCheckoutToKeyboard() {
+            const vv = window.visualViewport;
+            if (!vv || !checkoutModal.open) return;
+            const keyboardUp = vv.height < window.innerHeight - 80;
+            if (keyboardUp) {
+                checkoutModal.style.maxHeight = (vv.height - 16) + "px";
+                checkoutModal.style.marginTop = (vv.offsetTop + 8) + "px";
+                checkoutModal.style.marginBottom = "auto";
+                const focused = document.activeElement;
+                if (focused && checkoutModal.contains(focused)) focused.scrollIntoView({ block: "center", behavior: "smooth" });
+            } else {
+                checkoutModal.style.maxHeight = "";
+                checkoutModal.style.marginTop = "";
+                checkoutModal.style.marginBottom = "";
+            }
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", fitCheckoutToKeyboard);
+            window.visualViewport.addEventListener("scroll", fitCheckoutToKeyboard);
+        }
+        checkoutModal.addEventListener("close", () => {
+            checkoutModal.style.maxHeight = "";
+            checkoutModal.style.marginTop = "";
+            checkoutModal.style.marginBottom = "";
         });
         document.getElementById("checkoutClose").onclick=()=>checkoutModal.close();
         document.getElementById("checkoutCancel").onclick=()=>checkoutModal.close();
