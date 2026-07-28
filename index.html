@@ -2151,16 +2151,17 @@
             const p = detailProduct;
             if (!p) return;
             const images = galleryOf(p);
-            const video = youtubeId(p.videoUrl);
+            const videos = (Array.isArray(p.videos) ? p.videos : (p.videoUrl ? [p.videoUrl] : [])).map(youtubeId).filter(Boolean);
             const stock = stockOf(p.id);
             const inCart = cart.get(p.id) || 0;
             const room = Math.max(0, stock - inCart);
-            const showingVideo = video && detailIndex === images.length;
+            const videoIndex = detailIndex - images.length;
+            const showingVideo = videoIndex >= 0 && videoIndex < videos.length;
             const stage = showingVideo
-                ? `<iframe class="detail-video" src="https://www.youtube-nocookie.com/embed/${video}?rel=0&autoplay=1" title="Video de ${esc(p.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`
+                ? `<iframe class="detail-video" src="https://www.youtube-nocookie.com/embed/${videos[videoIndex]}?rel=0&autoplay=1" title="Video de ${esc(p.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`
                 : `<img src="${esc(images[detailIndex] || images[0])}" alt="${esc(p.title)}">`;
             const thumbs = images.map((src, i) => `<button data-thumb="${i}" class="${i === detailIndex ? "active" : ""}" aria-label="Foto ${i + 1}"><img src="${esc(src)}" alt=""></button>`).join("")
-                + (video ? `<button data-thumb="${images.length}" class="${showingVideo ? "active" : ""}" aria-label="Ver video"><img src="https://i.ytimg.com/vi/${video}/mqdefault.jpg" alt=""><span class="vid material-symbols-outlined">play_arrow</span></button>` : "");
+                + videos.map((vid, i) => `<button data-thumb="${images.length + i}" class="${detailIndex === images.length + i ? "active" : ""}" aria-label="Ver video ${i + 1}"><img src="https://i.ytimg.com/vi/${vid}/mqdefault.jpg" alt=""><span class="vid material-symbols-outlined">play_arrow</span></button>`).join("");
             const badge = stock === 0
                 ? `<span class="detail-chip out">Agotado</span>`
                 : stock <= 3 && Number.isFinite(stock) ? `<span class="detail-chip warn">Últimas ${stock} unidades</span>` : `<span class="detail-chip">Disponible</span>`;
@@ -2170,7 +2171,7 @@
                 <div class="detail-wrap">
                     <div class="detail-media">
                         <div class="detail-stage">${stage}</div>
-                        ${images.length > 1 || video ? `<div class="detail-thumbs">${thumbs}</div>` : ""}
+                        ${images.length > 1 || videos.length ? `<div class="detail-thumbs">${thumbs}</div>` : ""}
                     </div>
                     <div class="detail-info">
                         <div class="product-cat">${esc(p.catLabel)}</div>
@@ -2684,7 +2685,7 @@
                     stock: p.stock,
                     img: p.image_url,
                     gallery: Array.isArray(p.gallery) ? p.gallery : [],
-                    videoUrl: p.video_url || ""
+                    videos: Array.isArray(p.metadata?.videos) && p.metadata.videos.length ? p.metadata.videos : (p.video_url ? [p.video_url] : [])
                 }));
                 [...cart.keys()].forEach(id => {
                     if (!PRODUCTS.some(product => product.id === id)) cart.delete(id);

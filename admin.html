@@ -267,7 +267,7 @@
         <span class="field-hint">Se achican y comprimen solas antes de subirse, así la tienda carga rápido en el celular.</span>
         <span class="upload-status" id="uploadStatus"></span>
       </div>
-      <div class="field full"><label>Video de YouTube (opcional)</label><input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
+      <div class="field full"><label>Videos de YouTube (opcional)</label><textarea id="videoUrl" rows="2" placeholder="https://www.youtube.com/watch?v=..."></textarea><span class="field-hint">Podés pegar más de un link: uno por renglón. Cada video aparece con su miniatura en la ficha del producto.</span></div>
       <input type="hidden" id="img">
       <div class="field full"><label>Descripción</label><textarea id="desc" required></textarea></div>
       <label class="check full"><input id="active" type="checkbox" checked> Producto visible en la tienda</label>
@@ -419,8 +419,8 @@ async function persist(message="Cambios guardados", changed=null, removedId=null
    }
  }catch(error){toast("No se pudo sincronizar: "+error.message)}
 }
-function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,gallery:Array.isArray(p.gallery)&&p.gallery.length?p.gallery.slice(0,5):(p.img?[p.img]:[]),video_url:p.videoUrl||null,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||"",discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
-function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",gallery:Array.isArray(p.gallery)?p.gallery:[],videoUrl:p.video_url||"",active:p.active}}
+function toDbProduct(p,categoryId){const vids=String(p.videoUrl||"").split(/\s*\n\s*/).map(s=>s.trim()).filter(Boolean);const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,gallery:Array.isArray(p.gallery)&&p.gallery.length?p.gallery.slice(0,5):(p.img?[p.img]:[]),video_url:vids[0]||null,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||"",discount:p.discount||"",videos:vids}};if(p.dbId)row.id=p.dbId;return row}
+function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",gallery:Array.isArray(p.gallery)?p.gallery:[],videoUrl:(Array.isArray(p.metadata?.videos)&&p.metadata.videos.length?p.metadata.videos:(p.video_url?[p.video_url]:[])).join("\n"),active:p.active}}
 async function ensureCategory(p){
  const {data:existing,error:readError}=await db.from("categories").select("id").eq("slug",p.cat).maybeSingle();
  if(readError)throw readError;
