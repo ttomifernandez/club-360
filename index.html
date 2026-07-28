@@ -2029,7 +2029,19 @@
         checkoutForm.onsubmit=async event=>{
             event.preventDefault();const button=document.getElementById("confirmOrder");checkoutMessage.textContent="";
             await catalogPromise;
-            if(!storeDb){checkoutModal.close();whatsappOrder();return}
+            // Si el catálogo remoto no llegó (red lenta, deploy en curso), se
+            // reintenta antes de caer en WhatsApp: sin base no hay pedido
+            // registrado ni pago online, y el cliente tiene que enterarse.
+            if(!storeDb){
+                checkoutMessage.textContent="Reconectando con la tienda…";
+                await loadSharedCatalog();
+            }
+            if(!storeDb){
+                checkoutMessage.textContent="No pudimos registrar el pedido en este momento. Te llevamos a WhatsApp para coordinarlo a mano.";
+                setTimeout(()=>{checkoutModal.close();whatsappOrder()},2200);
+                return;
+            }
+            checkoutMessage.textContent="";
             const invalidIds=[...cart.keys()].filter(id=>!PRODUCTS.some(product=>product.id===id && product.dbId));
             if(invalidIds.length){
                 invalidIds.forEach(id=>cart.delete(id));
