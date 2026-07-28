@@ -24,7 +24,9 @@ export default async function handler(request, response) {
 
   // El webhook se identifica con un secreto compartido.
   const provided = request.headers["x-webhook-secret"] || "";
-  if (!cfg.secret || provided !== cfg.secret) return response.status(401).json({ error: "No autorizado." });
+  if (!cfg.secret) return response.status(500).json({ error: "Falta ORDER_WEBHOOK_SECRET en las variables de Vercel (o falta el Redeploy)." });
+  if (!provided) return response.status(401).json({ error: "El aviso llegó sin el header x-webhook-secret." });
+  if (provided !== cfg.secret) return response.status(401).json({ error: "El secreto del header no coincide con el de Vercel." });
   if (!cfg.resendKey || !cfg.from || !cfg.to.length) {
     return response.status(500).json({ error: "Faltan RESEND_API_KEY, NOTIFY_FROM o NOTIFY_TO." });
   }
