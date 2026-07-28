@@ -67,7 +67,6 @@
       <section class="view" id="coupons"><div class="intro"><div><h2>Cupones</h2><p>Descuentos con vigencia y límites de uso.</p></div><button class="btn primary" id="newCoupon">+ Nuevo cupón</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Descuento</th><th>Vigencia</th><th>Usos</th><th>Estado</th><th></th></tr></thead><tbody id="couponRows"></tbody></table></div></div></section>
       <section class="view" id="users">
         <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div><button class="btn primary" id="newUserBtn" hidden>+ Nuevo usuario</button></div>
-        <div class="notice show" id="usersNotice">Creá cuentas para tu equipo con "+ Nuevo usuario": definís email, contraseña temporal, rol y acceso, y la persona entra directo con esos datos.</div>
         <div class="panel"><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Acceso</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div></div>
       </section>
     </div>
@@ -264,7 +263,6 @@ function renderOrders(){
 }
 function renderUsers(){
  const isOwner=currentRole==="owner";
- document.getElementById("usersNotice").classList.toggle("show",isOwner);
  document.getElementById("newUserBtn").hidden=!isOwner;
  document.getElementById("userRows").innerHTML=profilesList.length?profilesList.map(u=>`<tr><td><strong>${escapeHtml(u.full_name)}</strong><br><small>${escapeHtml(u.id.slice(0,8))}…</small></td><td>${ROLE_LABELS[u.role]||escapeHtml(u.role)}</td><td>${shortDate(u.created_at)}</td><td><span class="pill ${u.active?"":"off"}">${u.active?"Habilitado":"Sin activar"}</span></td><td>${isOwner?`<div class="row-actions"><button data-user-edit="${u.id}" title="Editar">✎</button></div>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin usuarios visibles para tu rol.</td></tr>`;
 }
