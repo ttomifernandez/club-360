@@ -180,6 +180,28 @@ let profilesList=[];
 let currentRole=null;
 let currentUserId=null;
 const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor"};
+// Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
+// (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
+const ROLE_PERMS={
+ owner:{views:["dashboard","products","categories","orders","coupons","users"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
+ operator:{views:["dashboard","products","categories","orders","coupons"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
+ catalog:{views:["dashboard","products","categories"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none"},
+ support:{views:["dashboard","products","categories","orders","coupons"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
+ auditor:{views:["dashboard","products","categories","orders","coupons","users"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
+};
+const ALL_PERMS=ROLE_PERMS.owner;
+let perms=ALL_PERMS;
+const canWrite=area=>perms[area]==="write";
+function applyPermissions(){
+ perms=ROLE_PERMS[currentRole]||ALL_PERMS;
+ document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=!perms.views.includes(b.dataset.view));
+ const activeView=document.querySelector(".view.active")?.id;
+ if(activeView&&!perms.views.includes(activeView))showView("dashboard");
+ document.querySelectorAll("[data-new]").forEach(b=>b.hidden=!canWrite("products"));
+ document.getElementById("newCategory").hidden=!canWrite("categories");
+ document.getElementById("newCoupon").hidden=!canWrite("coupons");
+ render();renderCoupons();renderOrders();renderUsers();
+}
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 function load(){try{const x=JSON.parse(localStorage.getItem(STORAGE));return Array.isArray(x)&&x.length?x:structuredClone(seed)}catch{return structuredClone(seed)}}
@@ -229,7 +251,7 @@ async function loadRemoteAdminData(){
  renderCategories();renderCoupons();renderOrders();renderUsers();
  if(denied.length&&!accessNotified){accessNotified=true;toast("Tu rol no tiene acceso a: "+denied.join(", "),4000)}
 }
-function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button><button data-delete="${p.id}" title="Eliminar">⌫</button></div></td>`:""}</tr>`}
+function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button>${perms.remove?`<button data-delete="${p.id}" title="Eliminar">⌫</button>`:""}</div></td>`:""}</tr>`}
 function render(){
  const active=products.filter(p=>p.active);document.getElementById("activeCount").textContent=active.length;
  document.getElementById("inventoryValue").textContent=money(products.reduce((t,p)=>t+p.price*p.stock,0));
@@ -241,16 +263,16 @@ function render(){
 function renderProducts(){
  const q=document.getElementById("productSearch").value.toLowerCase();
  const list=products.filter(p=>(p.title+" "+p.catLabel).toLowerCase().includes(q));
- document.getElementById("productRows").innerHTML=list.length?list.map(p=>productRow(p,true)).join(""):`<tr><td colspan="6" class="empty">No encontramos productos.</td></tr>`;
+ document.getElementById("productRows").innerHTML=list.length?list.map(p=>productRow(p,canWrite("products"))).join(""):`<tr><td colspan="6" class="empty">No encontramos productos.</td></tr>`;
 }
 function renderCategories(){
  const cats=remoteMode?categories.map(c=>({dbId:c.id,id:c.slug,label:c.name,active:c.active,order:c.sort_order,count:products.filter(x=>x.cat===c.slug).length})):[...new Map(products.map(p=>[p.cat,{id:p.cat,label:p.catLabel,active:true,order:0,count:products.filter(x=>x.cat===p.cat).length}])).values()];
  document.getElementById("categoryOptions").innerHTML=cats.map(c=>`<option value="${escapeHtml(c.label)}">`).join("");
- document.getElementById("categoryList").innerHTML=cats.length?`<div class="table-wrap"><table><thead><tr><th>Categoría</th><th>Identificador</th><th>Productos</th><th>Estado</th><th></th></tr></thead><tbody>${cats.map(c=>`<tr><td><strong>${escapeHtml(c.label)}</strong></td><td>${escapeHtml(c.id)}</td><td>${c.count}</td><td><span class="pill ${c.active?"":"off"}">${c.active?"Visible":"Oculta"}</span></td><td><div class="row-actions"><button data-category-edit="${c.dbId||c.id}" title="Editar">✎</button><button data-category-delete="${c.dbId||c.id}" title="Eliminar">⌫</button></div></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Todavía no hay categorías.</div>`;
+ document.getElementById("categoryList").innerHTML=cats.length?`<div class="table-wrap"><table><thead><tr><th>Categoría</th><th>Identificador</th><th>Productos</th><th>Estado</th><th></th></tr></thead><tbody>${cats.map(c=>`<tr><td><strong>${escapeHtml(c.label)}</strong></td><td>${escapeHtml(c.id)}</td><td>${c.count}</td><td><span class="pill ${c.active?"":"off"}">${c.active?"Visible":"Oculta"}</span></td><td>${canWrite("categories")?`<div class="row-actions"><button data-category-edit="${c.dbId||c.id}" title="Editar">✎</button>${perms.remove?`<button data-category-delete="${c.dbId||c.id}" title="Eliminar">⌫</button>`:""}</div>`:""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">Todavía no hay categorías.</div>`;
 }
 function shortDate(value){return value?new Date(value).toLocaleDateString("es-AR"):"—"}
 function renderCoupons(){
- document.getElementById("couponRows").innerHTML=coupons.length?coupons.map(c=>`<tr><td><strong>${escapeHtml(c.code)}</strong></td><td>${c.discount_type==="percentage"?`${Number(c.value)}%`:money(c.value)}</td><td>${shortDate(c.starts_at)} → ${shortDate(c.ends_at)}</td><td>${c.uses}${c.max_uses?` / ${c.max_uses}`:""}</td><td><span class="pill ${c.active?"":"off"}">${c.active?"Activo":"Inactivo"}</span></td><td><div class="row-actions"><button data-coupon-edit="${c.id}" title="Editar">✎</button><button data-coupon-toggle="${c.id}" title="Activar o desactivar">${c.active?"◉":"○"}</button><button data-coupon-delete="${c.id}" title="Eliminar">⌫</button></div></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay cupones.</td></tr>`;
+ document.getElementById("couponRows").innerHTML=coupons.length?coupons.map(c=>`<tr><td><strong>${escapeHtml(c.code)}</strong></td><td>${c.discount_type==="percentage"?`${Number(c.value)}%`:money(c.value)}</td><td>${shortDate(c.starts_at)} → ${shortDate(c.ends_at)}</td><td>${c.uses}${c.max_uses?` / ${c.max_uses}`:""}</td><td><span class="pill ${c.active?"":"off"}">${c.active?"Activo":"Inactivo"}</span></td><td>${canWrite("coupons")?`<div class="row-actions"><button data-coupon-edit="${c.id}" title="Editar">✎</button><button data-coupon-toggle="${c.id}" title="Activar o desactivar">${c.active?"◉":"○"}</button><button data-coupon-delete="${c.id}" title="Eliminar">⌫</button></div>`:""}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay cupones.</td></tr>`;
 }
 function renderOrders(){
  const labels={pending:"Pendiente",paid:"Pagado",preparing:"Preparando",shipped:"Enviado",completed:"Completado",cancelled:"Cancelado"};
@@ -259,10 +281,10 @@ function renderOrders(){
  knownMaxOrder=orders.reduce((max,o)=>Math.max(max,Number(o.order_number)||0),0);
  document.getElementById("orderCount").textContent=orders.length;document.getElementById("salesTotal").textContent=orders.length?(pending?`${pending} pendiente${pending>1?"s":""} · `:"")+money(orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+Number(o.total),0))+" acumulado":"Sin ventas registradas";
  document.getElementById("ordersNotice").classList.toggle("show",!orders.length);
- document.getElementById("orderRows").innerHTML=orders.length?orders.map(o=>`<tr><td><button data-order-view="${o.id}" style="border:0;background:none;color:var(--green);font-weight:800">#${o.order_number}</button></td><td>${escapeHtml(o.customer_name)}<br><small>${escapeHtml(o.customer_phone)}</small></td><td>${shortDate(o.created_at)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${labels[o.status]||o.status}</span></td><td><select data-order-status="${o.id}">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${value===o.status?"selected":""}>${label}</option>`).join("")}</select></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay pedidos.</td></tr>`;
+ document.getElementById("orderRows").innerHTML=orders.length?orders.map(o=>`<tr><td><button data-order-view="${o.id}" style="border:0;background:none;color:var(--green);font-weight:800">#${o.order_number}</button></td><td>${escapeHtml(o.customer_name)}<br><small>${escapeHtml(o.customer_phone)}</small></td><td>${shortDate(o.created_at)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${labels[o.status]||o.status}</span></td><td>${canWrite("orders")?`<select data-order-status="${o.id}">${Object.entries(labels).map(([value,label])=>`<option value="${value}" ${value===o.status?"selected":""}>${label}</option>`).join("")}</select>`:""}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">Todavía no hay pedidos.</td></tr>`;
 }
 function renderUsers(){
- const isOwner=currentRole==="owner";
+ const isOwner=canWrite("users");
  document.getElementById("newUserBtn").hidden=!isOwner;
  document.getElementById("userRows").innerHTML=profilesList.length?profilesList.map(u=>`<tr><td><strong>${escapeHtml(u.full_name)}</strong><br><small>${escapeHtml(u.id.slice(0,8))}…</small></td><td>${ROLE_LABELS[u.role]||escapeHtml(u.role)}</td><td>${shortDate(u.created_at)}</td><td><span class="pill ${u.active?"":"off"}">${u.active?"Habilitado":"Sin activar"}</span></td><td>${isOwner?`<div class="row-actions"><button data-user-edit="${u.id}" title="Editar">✎</button>${u.id===currentUserId?"":`<button data-user-delete="${u.id}" title="Eliminar">⌫</button>`}</div>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin usuarios visibles para tu rol.</td></tr>`;
 }
@@ -453,9 +475,10 @@ async function activateSession(session){
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
  await Promise.all([loadRemoteProducts(),loadRemoteAdminData()]);
+ applyPermissions();
  startOrderWatch();
 }
-function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;profilesList=[];accessNotified=false}
+function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
 document.getElementById("logoutBtn").onclick=async()=>{document.getElementById("logoutBtn").disabled=true;await db.auth.signOut();document.getElementById("logoutBtn").disabled=false;toast("Sesión cerrada")};
 document.getElementById("loginForm").onsubmit=async e=>{
  e.preventDefault();const out=document.getElementById("authError");out.textContent="";
