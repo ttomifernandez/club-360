@@ -35,6 +35,20 @@
     .stat.alert strong{color:var(--gold)}.stat.good small{color:var(--green2)}
     .delta{font-weight:700}.delta.up{color:var(--green2)}.delta.down{color:var(--danger)}
     .dash-note{font-size:12px;color:var(--muted)}
+    .chart-wrap{position:relative;padding:10px 14px 8px}
+    .chart-wrap svg{width:100%;height:132px;display:block;overflow:visible}
+    .chart-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px}
+    .line{fill:none;stroke:#047857;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    .dot{fill:#047857;stroke:#fff;stroke-width:1.5;opacity:.55}.dot.now{opacity:1;stroke-width:2}
+    .cross{stroke:var(--line);stroke-width:1;transition:opacity .12s}
+    .bar-hit{fill:transparent;cursor:pointer}
+    .axis-line{stroke:var(--line);stroke-width:1}
+    .grid-line{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+    .chart-label{font:600 10px "DM Sans",sans-serif;fill:var(--muted)}
+    .chart-label.now{fill:var(--ink);font-weight:700}
+    .chart-value{font:700 11px Manrope,sans-serif;fill:var(--green2)}
+    .chart-tip{position:absolute;pointer-events:none;background:#173a2f;color:#fff;padding:8px 11px;border-radius:9px;font-size:12px;line-height:1.45;white-space:nowrap;transform:translate(-50%,-100%);opacity:0;transition:opacity .12s;box-shadow:0 8px 20px rgba(0,0,0,.22);z-index:3}
+    .chart-tip.show{opacity:1}.chart-tip strong{display:block;font-size:13px}
     .collapse-btn{border:0;background:rgba(255,255,255,.12);color:#cce0d8;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
     .collapse-btn:hover{background:rgba(255,255,255,.2);color:#fff}
     .shell.collapsed{grid-template-columns:74px 1fr}
@@ -120,6 +134,10 @@
             <div class="panel-head"><h3>Necesitan reposición</h3><button class="btn" data-go="products">Ver catálogo</button></div>
             <div class="table-wrap"><table><thead><tr><th>Producto</th><th>Stock</th><th>Valor</th></tr></thead><tbody id="dashStock"></tbody></table></div>
           </div>
+        </div>
+        <div class="panel" style="margin-top:18px">
+          <div class="panel-head"><h3>Ventas de los últimos 6 meses</h3><span class="dash-note" id="chartNote">—</span></div>
+          <div class="chart-wrap" id="salesChart"></div>
         </div>
         <div class="panel" style="margin-top:18px">
           <div class="panel-head"><h3>Más vendidos</h3><span class="dash-note" id="inventoryNote">—</span></div>
@@ -212,7 +230,7 @@
 
 <dialog id="productModal">
   <form method="dialog" id="productForm">
-    <div class="modal-head"><h3 id="modalTitle">Nuevo producto</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3 id="modalTitle">Nuevo producto</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form">
       <input type="hidden" id="editingId">
       <div class="field full"><label>Nombre</label><input id="title" required placeholder="Ej. Cinturón de cuero premium"></div>
@@ -233,7 +251,7 @@
       <div class="field full"><label>Descripción</label><textarea id="desc" required></textarea></div>
       <label class="check full"><input id="active" type="checkbox" checked> Producto visible en la tienda</label>
     </div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" id="saveProduct" value="default">Guardar producto</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" id="saveProduct" value="default">Guardar producto</button></div>
   </form>
 </dialog>
 <dialog id="orderModal">
@@ -243,9 +261,9 @@
 </dialog>
 <dialog id="categoryModal">
   <form method="dialog" id="categoryForm">
-    <div class="modal-head"><h3 id="categoryModalTitle">Nueva categoría</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3 id="categoryModalTitle">Nueva categoría</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form"><input type="hidden" id="categoryId"><div class="field full"><label>Nombre</label><input id="categoryName" required></div><div class="field"><label>Identificador</label><input id="categorySlug" required></div><div class="field"><label>Orden</label><input id="categoryOrder" type="number" min="0" value="0"></div><label class="check full"><input id="categoryActive" type="checkbox" checked> Visible en la tienda</label></div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
   </form>
 </dialog>
 <dialog id="newPassModal">
@@ -266,7 +284,7 @@
 </dialog>
 <dialog id="tutorialModal">
   <form method="dialog" id="tutorialForm">
-    <div class="modal-head"><h3 id="tutorialModalTitle">Nuevo video</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3 id="tutorialModalTitle">Nuevo video</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form">
       <input type="hidden" id="tutorialId">
       <div class="field full"><label>Título</label><input id="tutorialTitle" required placeholder="Ej. Cómo cargar un producto nuevo"></div>
@@ -275,7 +293,7 @@
       <div class="field"><label>Orden</label><input id="tutorialOrder" type="number" min="0" value="0"></div>
       <label class="check full"><input id="tutorialActive" type="checkbox" checked> Visible para el equipo</label>
     </div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar video</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar video</button></div>
   </form>
 </dialog>
 <dialog id="playerModal">
@@ -284,7 +302,7 @@
 </dialog>
 <dialog id="newUserModal">
   <form method="dialog" id="newUserForm">
-    <div class="modal-head"><h3>Nuevo usuario</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3>Nuevo usuario</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form">
       <div class="field full"><label>Nombre y apellido</label><input id="nuName" required></div>
       <div class="field full"><label>Email</label><input id="nuEmail" type="email" required autocomplete="off"></div>
@@ -294,12 +312,12 @@
       <span class="field-hint" style="grid-column:1/-1">Pasale el email y la contraseña temporal a la persona: entra directo, sin email de confirmación.</span>
       <span class="field-hint" style="grid-column:1/-1;color:var(--danger)" id="nuError"></span>
     </div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default" id="nuSubmit">Crear usuario</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default" id="nuSubmit">Crear usuario</button></div>
   </form>
 </dialog>
 <dialog id="userModal">
   <form method="dialog" id="userForm">
-    <div class="modal-head"><h3>Editar usuario</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3>Editar usuario</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form">
       <input type="hidden" id="userId">
       <div class="field full"><label>Nombre</label><input id="userFullName" required></div>
@@ -307,14 +325,14 @@
       <label class="check full"><input id="userActive" type="checkbox"> Acceso al panel habilitado</label>
       <span class="field-hint" style="grid-column:1/-1" id="userSelfHint"></span>
     </div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar usuario</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar usuario</button></div>
   </form>
 </dialog>
 <dialog id="couponModal">
   <form method="dialog" id="couponForm">
-    <div class="modal-head"><h3 id="couponModalTitle">Nuevo cupón</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="modal-head"><h3 id="couponModalTitle">Nuevo cupón</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
     <div class="form"><input type="hidden" id="couponId"><div class="field"><label>Código</label><input id="couponCode" required placeholder="RURAL10"></div><div class="field"><label>Tipo</label><select id="couponType"><option value="percentage">Porcentaje</option><option value="fixed">Monto fijo</option></select></div><div class="field"><label>Valor</label><input id="couponValue" required type="number" min="1"></div><div class="field"><label>Límite total de usos</label><input id="couponMaxUses" type="number" min="1" placeholder="Sin límite"></div><div class="field"><label>Comienza</label><input id="couponStarts" type="datetime-local"></div><div class="field"><label>Finaliza</label><input id="couponEnds" type="datetime-local"></div><label class="check full"><input id="couponActive" type="checkbox" checked> Cupón activo</label></div>
-    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar cupón</button></div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar cupón</button></div>
   </form>
 </dialog>
 <div class="toast" id="toast">Cambios guardados</div>
@@ -462,6 +480,8 @@ function renderDashboard(){
 
  document.getElementById("dashStock").innerHTML=low.length?[...low].sort((a,b)=>a.stock-b.stock).slice(0,5).map(p=>`<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.catLabel)}</small></span></div></td><td class="${Number(p.stock)===0?"stock low":"stock"}">${Number(p.stock)===0?"Agotado":p.stock+" u."}</td><td>${money(p.price)}</td></tr>`).join(""):`<tr><td colspan="3" class="empty">Todo el catálogo con stock suficiente.</td></tr>`;
 
+ renderSalesChart(valid);
+
  const sold=new Map();
  valid.forEach(o=>(orderItems.get(o.id)||[]).forEach(i=>{
    const acc=sold.get(i.product_name)||{units:0,total:0};
@@ -471,6 +491,86 @@ function renderDashboard(){
  const top=[...sold.entries()].sort((a,b)=>b[1].units-a[1].units).slice(0,5);
  document.getElementById("dashTop").innerHTML=top.length?top.map(([name,d])=>`<tr><td><strong>${escapeHtml(name)}</strong></td><td>${d.units}</td><td>${money(d.total)}</td></tr>`).join(""):`<tr><td colspan="3" class="empty">Cuando entren ventas vas a ver acá qué se vende más.</td></tr>`;
 }
+// Ventas por mes: barras, una sola serie, con detalle al pasar el mouse.
+const MONTHS=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function renderSalesChart(valid){
+ const box=document.getElementById("salesChart");
+ const now=new Date();
+ const buckets=[];
+ for(let i=5;i>=0;i--){
+   const from=new Date(now.getFullYear(),now.getMonth()-i,1);
+   const to=new Date(now.getFullYear(),now.getMonth()-i+1,1);
+   const list=valid.filter(o=>{const d=new Date(o.created_at);return d>=from&&d<to});
+   buckets.push({label:MONTHS[from.getMonth()],year:from.getFullYear(),total:list.reduce((t,o)=>t+Number(o.total),0),count:list.length,actual:i===0});
+ }
+ const max=Math.max(...buckets.map(b=>b.total));
+ const totalPeriodo=buckets.reduce((t,b)=>t+b.total,0);
+ document.getElementById("chartNote").textContent=totalPeriodo?money(totalPeriodo)+" en el período":"—";
+ if(!totalPeriodo){
+   box.innerHTML=`<p class="chart-empty">Cuando entren las primeras ventas vas a ver acá cómo evoluciona mes a mes.</p>`;
+   return;
+ }
+ // Se dibuja al ancho real del panel para que el texto no se agrande al escalar.
+ // Si el panel todavía no está en pantalla, clientWidth es chico y el SVG
+ // se escalaría enorme: en ese caso se usa un ancho de referencia.
+ const medido=Math.round(box.getBoundingClientRect().width);
+ const W=medido>320?medido-32:680,H=132,padX=6,top=22,bottom=20;
+ const plot=H-top-bottom, slot=(W-padX*2)/buckets.length, barW=Math.min(30,slot*0.38);
+ const y=v=>top+plot-(max?v/max*plot:0);
+ const cx=i=>padX+slot*i+slot/2;
+ const pts=buckets.map((b,i)=>({x:cx(i),y:y(b.total),b}));
+
+ // Curva suave (Catmull-Rom pasada a bezier) sobre los puntos mensuales.
+ const curva=list=>{
+   if(list.length<2)return "";
+   let d=`M${list[0].x} ${list[0].y}`;
+   for(let i=0;i<list.length-1;i++){
+     const p0=list[i-1]||list[i],p1=list[i],p2=list[i+1],p3=list[i+2]||p2,t=0.85/6;
+     d+=` C${p1.x+(p2.x-p0.x)*t} ${Math.min(top+plot,Math.max(top,p1.y+(p2.y-p0.y)*t))}, ${p2.x-(p3.x-p1.x)*t} ${Math.min(top+plot,Math.max(top,p2.y-(p3.y-p1.y)*t))}, ${p2.x} ${p2.y}`;
+   }
+   return d;
+ };
+ const linea=curva(pts);
+ const area=linea?`${linea} L${pts[pts.length-1].x} ${top+plot} L${pts[0].x} ${top+plot} Z`:"";
+ const puntos=pts.map((p,i)=>`<circle class="dot ${p.b.actual?"now":""}" cx="${p.x}" cy="${p.y}" r="${p.b.actual?3.5:2.5}"/>`).join("");
+ const hits=buckets.map((b,i)=>`<rect class="bar-hit" x="${cx(i)-slot/2}" y="${top}" width="${slot}" height="${plot}" data-i="${i}"/>`).join("");
+ const meses=buckets.map((b,i)=>`<text class="chart-label ${b.actual?"now":""}" x="${cx(i)}" y="${H-8}" text-anchor="middle">${b.label}</text>`).join("");
+ const ultimo=pts[pts.length-1];
+ const valorActual=ultimo.b.total?`<text class="chart-value" x="${ultimo.x}" y="${Math.max(top+11,ultimo.y-11)}" text-anchor="${ultimo.x>W-60?"end":"middle"}">${money(ultimo.b.total)}</text>`:"";
+
+ box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Ventas por mes de los últimos seis meses">
+   <defs><linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+     <stop offset="0%" stop-color="#047857" stop-opacity=".13"/>
+     <stop offset="100%" stop-color="#047857" stop-opacity="0"/>
+   </linearGradient></defs>
+   <line class="grid-line" x1="${padX}" y1="${top}" x2="${W-padX}" y2="${top}"/>
+   <text class="chart-label" x="${padX}" y="${top-8}">${money(max)}</text>
+   <path class="area" d="${area}" fill="url(#areaFill)"/>
+   <path class="line" d="${linea}"/>
+   ${puntos}
+   <line class="cross" id="chartCross" x1="0" y1="${top}" x2="0" y2="${top+plot}" style="opacity:0"/>
+   ${hits}
+   ${meses}
+   ${valorActual}
+   <line class="axis-line" x1="${padX}" y1="${top+plot}" x2="${W-padX}" y2="${top+plot}"/>
+ </svg><div class="chart-tip" id="chartTip"></div>`;
+ const tip=document.getElementById("chartTip");
+ box.querySelectorAll(".bar-hit").forEach(hit=>{
+   const b=buckets[Number(hit.dataset.i)];
+   const cross=document.getElementById("chartCross");
+   const px=Number(hit.getAttribute("x"))+Number(hit.getAttribute("width"))/2;
+   hit.onmousemove=e=>{
+     const r=box.getBoundingClientRect();
+     tip.innerHTML=`<strong>${money(b.total)}</strong>${b.count} ${b.count===1?"pedido":"pedidos"} · ${b.label} ${b.year}`;
+     tip.style.left=(e.clientX-r.left)+"px";tip.style.top=(e.clientY-r.top-14)+"px";
+     tip.classList.add("show");
+     cross.setAttribute("x1",px);cross.setAttribute("x2",px);cross.style.opacity="1";
+   };
+   hit.onmouseleave=()=>{tip.classList.remove("show");cross.style.opacity="0"};
+ });
+}
+let chartResize=null;
+window.addEventListener("resize",()=>{clearTimeout(chartResize);chartResize=setTimeout(()=>{if(document.getElementById("dashboard").classList.contains("active"))renderDashboard()},200)});
 document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>showView(b.dataset.go));
 function renderProducts(){
  const q=document.getElementById("productSearch").value.toLowerCase();
@@ -932,6 +1032,7 @@ function openModal(id){
 }
 function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje",customers:"Clientes"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
  if(id==="settings"&&remoteMode){renderMercadoPago();renderSiteTexts()}else stopMpPoll();
+ if(id==="dashboard")renderDashboard();
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 let toastTimer=null;

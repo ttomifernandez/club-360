@@ -45,6 +45,10 @@
   .ship{margin-top:1.25rem;padding:.9rem 1rem;background:var(--green-soft);border-radius:.9rem;font-size:.9rem;line-height:1.5}
   .wa{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:1.5rem;background:#25d366;color:#fff;text-decoration:none;padding:1rem;border-radius:.9rem;font-weight:800;font-size:.95rem}
   .msg{text-align:center;padding:2.5rem 1rem;color:var(--muted);line-height:1.6}
+  .loading{display:grid;place-items:center;gap:1rem;padding:3rem 1rem;color:var(--muted)}
+  .loading img{width:84px;height:84px;object-fit:contain;animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.45;transform:scale(.96)}50%{opacity:1;transform:scale(1)}}
+  @media (prefers-reduced-motion: reduce){.loading img{animation:none;opacity:.8}}
   .msg strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:1.2rem;color:var(--ink);margin-bottom:.5rem}
   .foot{text-align:center;padding:1.5rem 0;font-size:.75rem;color:#94a3b8}
   .foot a{color:var(--green);text-decoration:none;font-weight:700}
@@ -56,7 +60,7 @@
     <img src="images/logo-360.png" alt="">
     <span><strong>Bienestar Rural 360</strong><span>Seguimiento</span></span>
   </a>
-  <div class="card" id="card"><p class="msg">Buscando tu pedido…</p></div>
+  <div class="card" id="card"><div class="loading"><img src="images/logo-360.png" alt="">Buscando tu pedido…</div></div>
   <p class="foot">¿Dudas con tu pedido? <a href="/" id="storeLink">Volver a la tienda</a></p>
 </div>
 
