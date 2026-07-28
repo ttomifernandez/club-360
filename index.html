@@ -436,10 +436,17 @@
             opacity: 0;
             visibility: hidden;
             transform: translateY(14px);
-            transition: opacity .6s ease, transform .6s ease, visibility .6s;
+            /* El que sale se va primero y el que entra aparece después, para que
+               nunca se lean dos títulos encimados. */
+            transition: opacity .32s ease, transform .32s ease, visibility .32s;
         }
 
-        .hero-slide.is-active { opacity: 1; visibility: visible; transform: none; }
+        .hero-slide.is-active {
+            opacity: 1;
+            visibility: visible;
+            transform: none;
+            transition: opacity .45s ease .22s, transform .45s ease .22s, visibility 0s;
+        }
 
         .hero-slide-bg {
             position: absolute;
@@ -451,7 +458,7 @@
             transition: opacity .6s ease;
         }
 
-        .hero-slide-bg.is-active { opacity: .32; }
+        .hero-slide-bg.is-active { opacity: .32; transition: opacity .5s ease .15s; }
 
         .hero-arrow {
             position: absolute;
