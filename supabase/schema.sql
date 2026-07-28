@@ -80,7 +80,7 @@ create table public.order_items (
 
 create table public.audit_log (
   id bigint generated always as identity primary key,
-  actor_id uuid references auth.users(id),
+  actor_id uuid references auth.users(id) on delete set null,
   action text not null,
   table_name text not null,
   record_id text,
