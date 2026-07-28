@@ -33,6 +33,16 @@
     .gthumb .cover{position:absolute;left:0;right:0;bottom:0;background:rgba(23,79,61,.9);color:#fff;font-size:9px;font-weight:800;text-align:center;padding:2px;letter-spacing:.06em}
     .gthumb button{position:absolute;top:3px;border:0;width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.94);display:grid;place-items:center;font-size:12px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.2)}
     .gthumb .rm{right:3px;color:var(--danger)}.gthumb .left{left:3px}
+    .tut-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(268px,1fr))}
+    .tut-card{background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 4px 18px rgba(28,45,37,.04);display:flex;flex-direction:column}
+    .tut-cover{position:relative;aspect-ratio:16/9;background:#000;border:0;padding:0;cursor:pointer;display:block;width:100%}
+    .tut-cover img{width:100%;height:100%;object-fit:cover;display:block;opacity:.92}.tut-cover:hover img{opacity:1}
+    .tut-cover .play{position:absolute;inset:0;display:grid;place-items:center}.tut-cover .play span{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;color:#d32f2f;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    .tut-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:6px;flex:1}
+    .tut-body h4{margin:0;font:800 15px Manrope;line-height:1.3}.tut-body p{margin:0;color:var(--muted);font-size:13px;line-height:1.5;flex:1}
+    .tut-foot{display:flex;gap:5px;justify-content:flex-end;margin-top:6px}
+    #playerBody iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
+    @media(max-width:680px){.tut-grid{grid-template-columns:1fr}}
     .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
     .mobile-head{display:none}
     .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.connection{font-size:11px;color:var(--muted);margin-top:15px}
@@ -53,6 +63,7 @@
       <button data-view="coupons"><span class="icon">%</span><span>Cupones</span></button>
       <button data-view="users"><span class="icon">♙</span><span>Usuarios</span></button>
       <button data-view="settings"><span class="icon">⚙</span><span>Configuración</span></button>
+      <button data-view="learn"><span class="icon">▶</span><span>Aprendizaje</span></button>
     </nav>
     <div class="sidebar-foot"><strong>Propietario</strong><small>Acceso total · 2FA pendiente</small></div>
   </aside>
@@ -101,6 +112,10 @@
             <div class="mp-actions"><button class="btn primary" id="savePayOptions">Guardar opciones</button></div>
           </div>
         </div>
+      </section>
+      <section class="view" id="learn">
+        <div class="intro"><div><h2>Aprendizaje</h2><p>Videos cortos para manejar la tienda sin depender de nadie.</p></div><button class="btn primary" id="newTutorial" hidden>+ Nuevo video</button></div>
+        <div id="tutorialList"></div>
       </section>
     </div>
   </main>
@@ -156,6 +171,24 @@
     <div class="form"><input type="hidden" id="categoryId"><div class="field full"><label>Nombre</label><input id="categoryName" required></div><div class="field"><label>Identificador</label><input id="categorySlug" required></div><div class="field"><label>Orden</label><input id="categoryOrder" type="number" min="0" value="0"></div><label class="check full"><input id="categoryActive" type="checkbox" checked> Visible en la tienda</label></div>
     <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
   </form>
+</dialog>
+<dialog id="tutorialModal">
+  <form method="dialog" id="tutorialForm">
+    <div class="modal-head"><h3 id="tutorialModalTitle">Nuevo video</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
+    <div class="form">
+      <input type="hidden" id="tutorialId">
+      <div class="field full"><label>Título</label><input id="tutorialTitle" required placeholder="Ej. Cómo cargar un producto nuevo"></div>
+      <div class="field full"><label>Link de YouTube</label><input id="tutorialVideo" required placeholder="https://www.youtube.com/watch?v=..."></div>
+      <div class="field full"><label>Descripción</label><textarea id="tutorialDesc" placeholder="Qué se explica en el video"></textarea></div>
+      <div class="field"><label>Orden</label><input id="tutorialOrder" type="number" min="0" value="0"></div>
+      <label class="check full"><input id="tutorialActive" type="checkbox" checked> Visible para el equipo</label>
+    </div>
+    <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar video</button></div>
+  </form>
+</dialog>
+<dialog id="playerModal">
+  <div class="modal-head"><h3 id="playerTitle">Video</h3><button class="close" id="playerClose" aria-label="Cerrar">×</button></div>
+  <div id="playerBody" style="padding:0"></div>
 </dialog>
 <dialog id="newUserModal">
   <form method="dialog" id="newUserForm">
@@ -219,11 +252,11 @@ const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",s
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
 const ROLE_PERMS={
- owner:{views:["dashboard","products","categories","orders","coupons","users","settings"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
- operator:{views:["dashboard","products","categories","orders","coupons"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
- catalog:{views:["dashboard","products","categories"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none"},
- support:{views:["dashboard","products","categories","orders","coupons"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
- auditor:{views:["dashboard","products","categories","orders","coupons","users"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
+ owner:{views:["dashboard","products","categories","orders","coupons","users","settings","learn"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
+ operator:{views:["dashboard","products","categories","orders","coupons","learn"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
+ catalog:{views:["dashboard","products","categories","learn"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none"},
+ support:{views:["dashboard","products","categories","orders","coupons","learn"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
+ auditor:{views:["dashboard","products","categories","orders","coupons","users","learn"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
 };
 const ALL_PERMS=ROLE_PERMS.owner;
 let perms=ALL_PERMS;
@@ -236,7 +269,7 @@ function applyPermissions(){
  document.querySelectorAll("[data-new]").forEach(b=>b.hidden=!canWrite("products"));
  document.getElementById("newCategory").hidden=!canWrite("categories");
  document.getElementById("newCoupon").hidden=!canWrite("coupons");
- render();renderCoupons();renderOrders();renderUsers();
+ render();renderCoupons();renderOrders();renderUsers();renderTutorials();
 }
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
@@ -395,6 +428,63 @@ document.getElementById("orderClear").onclick=()=>{
  document.getElementById("orderStatusFilter").value="all";
  syncOrderPeriodInputs();renderOrders();
 };
+// ===== APRENDIZAJE =====
+let tutorials=[];
+const youtubeId=url=>{const m=String(url||"").match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);return m?m[1]:""};
+function renderTutorials(){
+ const isOwner=currentRole==="owner";
+ document.getElementById("newTutorial").hidden=!isOwner;
+ const list=isOwner?tutorials:tutorials.filter(t=>t.active);
+ document.getElementById("tutorialList").innerHTML=list.length
+  ?`<div class="tut-grid">${list.map(t=>{const id=youtubeId(t.video_url);return `<article class="tut-card"><button class="tut-cover" data-play="${t.id}" aria-label="Ver ${escapeHtml(t.title)}">${id?`<img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="">`:""}<span class="play"><span class="icon">▶</span></span></button><div class="tut-body"><h4>${escapeHtml(t.title)}${t.active?"":' <span class="pill off">Oculto</span>'}</h4><p>${escapeHtml(t.description||"")}</p>${isOwner?`<div class="tut-foot"><button class="btn" data-tut-edit="${t.id}">Editar</button><button class="btn danger" data-tut-del="${t.id}">Eliminar</button></div>`:""}</div></article>`}).join("")}</div>`
+  :`<div class="panel"><div class="empty">${isOwner?"Todavía no cargaste videos. Subilos a YouTube (pueden ser ocultos) y pegá el link acá.":"Todavía no hay videos disponibles."}</div></div>`;
+}
+async function loadTutorials(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("tutorials").select("*").order("sort_order").order("created_at");
+ tutorials=error?[]:(data||[]);
+ renderTutorials();
+}
+function openTutorialModal(id){
+ const t=tutorials.find(x=>x.id===id);
+ document.getElementById("tutorialModalTitle").textContent=t?"Editar video":"Nuevo video";
+ document.getElementById("tutorialId").value=t?.id||"";
+ document.getElementById("tutorialTitle").value=t?.title||"";
+ document.getElementById("tutorialVideo").value=t?.video_url||"";
+ document.getElementById("tutorialDesc").value=t?.description||"";
+ document.getElementById("tutorialOrder").value=t?.sort_order??0;
+ document.getElementById("tutorialActive").checked=t?.active??true;
+ document.getElementById("tutorialModal").showModal();
+}
+document.getElementById("newTutorial").onclick=()=>openTutorialModal();
+document.getElementById("tutorialForm").onsubmit=async e=>{
+ e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("tutorialModal").close();return}
+ const url=document.getElementById("tutorialVideo").value.trim();
+ if(!youtubeId(url))return toast("Ese link de YouTube no parece válido.",4000);
+ const id=document.getElementById("tutorialId").value;
+ const row={title:document.getElementById("tutorialTitle").value.trim(),video_url:url,description:document.getElementById("tutorialDesc").value.trim(),sort_order:Number(document.getElementById("tutorialOrder").value)||0,active:document.getElementById("tutorialActive").checked};
+ const {error}=id?await db.from("tutorials").update(row).eq("id",id):await db.from("tutorials").insert(row);
+ if(error)return toast("No se pudo guardar: "+error.message,4000);
+ document.getElementById("tutorialModal").close();await loadTutorials();toast("Video guardado");
+};
+document.getElementById("tutorialList").onclick=async e=>{
+ const play=e.target.closest("[data-play]"),edit=e.target.closest("[data-tut-edit]"),del=e.target.closest("[data-tut-del]");
+ if(play){
+   const t=tutorials.find(x=>x.id===play.dataset.play);const vid=youtubeId(t?.video_url);
+   if(!vid)return toast("El link del video no es válido.");
+   document.getElementById("playerTitle").textContent=t.title;
+   document.getElementById("playerBody").innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${vid}?rel=0&autoplay=1" title="${escapeHtml(t.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+   document.getElementById("playerModal").showModal();
+ }
+ if(edit)openTutorialModal(edit.dataset.tutEdit);
+ if(del&&confirm("¿Eliminar este video del listado?")){
+   const {error}=await db.from("tutorials").delete().eq("id",del.dataset.tutDel);
+   if(error)return toast(error.message,4000);
+   await loadTutorials();toast("Video eliminado");
+ }
+};
+document.getElementById("playerClose").onclick=()=>{document.getElementById("playerBody").innerHTML="";document.getElementById("playerModal").close()};
+document.getElementById("playerModal").addEventListener("close",()=>{document.getElementById("playerBody").innerHTML=""});
 function renderUsers(){
  const isOwner=canWrite("users");
  document.getElementById("newUserBtn").hidden=!isOwner;
@@ -568,7 +658,7 @@ function openModal(id){
  document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
-function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
+function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
  if(id==="settings"&&remoteMode)renderMercadoPago();else stopMpPoll();
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
@@ -745,7 +835,7 @@ async function activateSession(session){
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
- await Promise.all([loadRemoteProducts(),loadRemoteAdminData()]);
+ await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials()]);
  applyPermissions();
  startOrderWatch();
  handleMercadoPagoReturn();
