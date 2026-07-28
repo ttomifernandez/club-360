@@ -52,6 +52,12 @@ on conflict (key) do update set
   label = excluded.label,
   default_value = excluded.default_value,
   sort_order = excluded.sort_order,
-  multiline = excluded.multiline;
+  multiline = excluded.multiline,
+  -- Solo se pisa el texto en uso si nadie lo editó todavía: así este archivo
+  -- se puede volver a correr sin borrar los cambios del panel.
+  value = case
+    when public.site_texts.value = public.site_texts.default_value then excluded.value
+    else public.site_texts.value
+  end;
 
 select key, label, left(value, 45) as valor from public.site_texts order by sort_order;
