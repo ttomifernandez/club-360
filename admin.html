@@ -59,7 +59,8 @@
     @media(max-width:680px){.tut-grid{grid-template-columns:1fr}}
     .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
     .mobile-head{display:none}
-    .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.connection{font-size:11px;color:var(--muted);margin-top:15px}
+    .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.auth-error.ok{color:var(--green2)}
+    .auth-link{border:0;background:none;color:var(--green2);font-weight:700;font-size:13px;padding:10px 0 0;width:100%}.auth-link:hover{text-decoration:underline}.connection{font-size:11px;color:var(--muted);margin-top:15px}
     @media(max-width:980px){.shell{grid-template-columns:76px 1fr}.sidebar{padding:22px 10px}.brand{padding:0 7px 23px}.brand-copy,.nav span:not(.icon),.menu-label,.sidebar-foot{display:none}.nav button{justify-content:center}.nav button span.nav-badge{display:inline-block;position:absolute;top:2px;right:4px;margin:0;padding:1px 6px}.stats{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:680px){.shell{display:block}.sidebar{height:auto;position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;padding:8px}.brand,.menu-label,.sidebar-foot{display:none}.nav{display:flex;justify-content:space-around}.nav button{padding:10px}.nav button span:not(.icon){display:none}.nav button span.nav-badge{display:inline-block;position:absolute;top:-2px;right:0;margin:0;padding:1px 6px}.topbar{height:65px;padding:0 12px}.status,.user-copy,.top-actions>a{display:none}.content{padding:20px 14px 90px}.intro{align-items:flex-start;gap:12px}.intro h2{font-size:23px}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:14px}.stat strong{font-size:22px}.panel-head{align-items:stretch;flex-direction:column}.tools{display:grid;grid-template-columns:1fr auto}.search{min-width:0}.order-tools{display:grid;grid-template-columns:1fr 1fr}.order-tools .search{grid-column:1/-1}.table-wrap{overflow:auto}table{min-width:730px}.form{grid-template-columns:1fr}.field.full{grid-column:auto}}
   </style>
@@ -168,6 +169,14 @@
       <div class="auth-error" id="authError"></div>
       <button class="btn primary" type="submit">Ingresar</button>
     </form>
+    <button class="auth-link" id="forgotBtn" type="button">¿Olvidaste tu contraseña?</button>
+    <form id="recoverForm" hidden>
+      <p style="margin:0 0 4px">Te mandamos un link para elegir una nueva. Revisá el correo.</p>
+      <input id="recoverEmail" type="email" autocomplete="username" required placeholder="Tu correo">
+      <div class="auth-error" id="recoverMessage"></div>
+      <button class="btn primary" type="submit" id="recoverSubmit">Enviar link</button>
+      <button class="auth-link" id="backToLogin" type="button">Volver al ingreso</button>
+    </form>
   </div>
 </div>
 
@@ -207,6 +216,17 @@
     <div class="modal-head"><h3 id="categoryModalTitle">Nueva categoría</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
     <div class="form"><input type="hidden" id="categoryId"><div class="field full"><label>Nombre</label><input id="categoryName" required></div><div class="field"><label>Identificador</label><input id="categorySlug" required></div><div class="field"><label>Orden</label><input id="categoryOrder" type="number" min="0" value="0"></div><label class="check full"><input id="categoryActive" type="checkbox" checked> Visible en la tienda</label></div>
     <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
+  </form>
+</dialog>
+<dialog id="newPassModal">
+  <form method="dialog" id="newPassForm">
+    <div class="modal-head"><h3>Elegí tu nueva contraseña</h3></div>
+    <div class="form">
+      <div class="field full"><label>Nueva contraseña</label><input id="newPass1" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="field full"><label>Repetila</label><input id="newPass2" type="password" required minlength="8" autocomplete="new-password"></div>
+      <span class="field-hint" style="grid-column:1/-1;color:var(--danger)" id="newPassError"></span>
+    </div>
+    <div class="modal-foot"><button class="btn primary" value="default" id="newPassSubmit">Guardar contraseña</button></div>
   </form>
 </dialog>
 <dialog id="customerModal">
@@ -989,7 +1009,9 @@ async function initializeBackend(){
    const {data:{session}}=await db.auth.getSession();
    if(!session)document.getElementById("authGate").classList.add("show");
    else{document.getElementById("logoutBtn").hidden=false;activateSession(session).catch(reportAuthError)}
+   if(/type=recovery/.test(location.hash))askNewPassword();
    db.auth.onAuthStateChange((event,session)=>{
+     if(event==="PASSWORD_RECOVERY")askNewPassword();
      document.getElementById("authGate").classList.toggle("show",!session);
      document.getElementById("logoutBtn").hidden=!session;
      if(session)setTimeout(()=>activateSession(session).catch(reportAuthError),0);else clearSessionUi();
@@ -1021,6 +1043,46 @@ function handleMercadoPagoReturn(){
 }
 function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;isSuperadmin=false;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
 document.getElementById("logoutBtn").onclick=async()=>{document.getElementById("logoutBtn").disabled=true;await db.auth.signOut();document.getElementById("logoutBtn").disabled=false;toast("Sesión cerrada")};
+// ===== RECUPERAR CONTRASEÑA =====
+const showRecover=show=>{
+ document.getElementById("loginForm").hidden=show;
+ document.getElementById("forgotBtn").hidden=show;
+ document.getElementById("recoverForm").hidden=!show;
+ document.getElementById("recoverMessage").textContent="";
+ if(show)document.getElementById("recoverEmail").value=document.getElementById("loginEmail").value;
+};
+document.getElementById("forgotBtn").onclick=()=>showRecover(true);
+document.getElementById("backToLogin").onclick=()=>showRecover(false);
+document.getElementById("recoverForm").onsubmit=async e=>{
+ e.preventDefault();
+ const out=document.getElementById("recoverMessage"),button=document.getElementById("recoverSubmit");
+ out.className="auth-error";out.textContent="";button.disabled=true;button.textContent="Enviando…";
+ const {error}=await db.auth.resetPasswordForEmail(document.getElementById("recoverEmail").value.trim(),{redirectTo:location.origin+"/admin"});
+ button.disabled=false;button.textContent="Enviar link";
+ // No decimos si el correo existe o no: eso permitiría averiguar quién tiene cuenta.
+ if(error&&/rate|seconds/i.test(error.message))out.textContent="Esperá un momento antes de pedir otro link.";
+ else{out.className="auth-error ok";out.textContent="Si ese correo tiene acceso, ya le llegó el link."}
+};
+// Vuelta desde el mail de recuperación: se elige la contraseña nueva acá.
+function askNewPassword(){
+ const modal=document.getElementById("newPassModal");
+ if(!modal.open)modal.showModal();
+}
+document.getElementById("newPassForm").onsubmit=async e=>{
+ e.preventDefault();
+ const out=document.getElementById("newPassError"),button=document.getElementById("newPassSubmit");
+ const a=document.getElementById("newPass1").value,b=document.getElementById("newPass2").value;
+ out.textContent="";
+ if(a.length<8)return out.textContent="Tiene que tener al menos 8 caracteres.";
+ if(a!==b)return out.textContent="Las dos contraseñas no coinciden.";
+ button.disabled=true;button.textContent="Guardando…";
+ const {error}=await db.auth.updateUser({password:a});
+ button.disabled=false;button.textContent="Guardar contraseña";
+ if(error)return out.textContent=error.message;
+ document.getElementById("newPassModal").close();
+ history.replaceState(null,"",location.pathname);
+ toast("Contraseña actualizada",4000);
+};
 document.getElementById("loginForm").onsubmit=async e=>{
  e.preventDefault();const out=document.getElementById("authError");out.textContent="";
  const {error}=await db.auth.signInWithPassword({email:document.getElementById("loginEmail").value,password:document.getElementById("loginPassword").value});
