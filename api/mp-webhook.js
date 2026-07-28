@@ -32,6 +32,40 @@ function paymentIdFrom(request) {
 // la tienda y en qué estado está.
 const ack = response => response.status(200).json({ received: true });
 
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+
+// Comprobante para el cliente con el link para seguir su pedido.
+async function sendCustomerEmail(order, origin) {
+  const key = process.env.RESEND_API_KEY || "";
+  const from = process.env.NOTIFY_FROM || "";
+  if (!key || !from || !order.public_token) return;
+  const link = `${origin}/seguimiento?p=${order.public_token}`;
+  const money = "$" + Number(order.total || 0).toLocaleString("es-AR");
+  const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:520px;margin:0 auto;color:#0f172a">
+    <div style="background:#047857;color:#fff;padding:24px;border-radius:14px 14px 0 0;text-align:center">
+      <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85">Bienestar Rural 360</div>
+      <h1 style="margin:8px 0 0;font-size:23px">¡Recibimos tu pago!</h1>
+    </div>
+    <div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 14px 14px;padding:26px;text-align:center">
+      <p style="margin:0 0 6px;font-size:16px">Hola ${esc(String(order.customer_name || "").split(" ")[0])}, tu pedido <strong>#${esc(order.order_number)}</strong> quedó confirmado.</p>
+      <p style="margin:0 0 20px;color:#475569">Total abonado: <strong>${money}</strong></p>
+      ${order.shipping_method ? `<p style="margin:0 0 20px;padding:12px;background:#ecfdf5;border-radius:10px;font-size:14px;color:#0f172a"><strong>Entrega:</strong> ${esc(order.shipping_method)}${order.shipping_address ? `<br>${esc(order.shipping_address)}` : ""}</p>` : ""}
+      <a href="${esc(link)}" style="display:inline-block;background:#047857;color:#fff;text-decoration:none;padding:14px 26px;border-radius:10px;font-weight:700">Seguir mi pedido</a>
+      <p style="margin:20px 0 0;font-size:12px;color:#94a3b8;line-height:1.6">Guardá este correo: desde ese enlace vas a ver en qué estado está tu compra en todo momento.</p>
+    </div>
+  </div>`;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [order.customer_email],
+      subject: `Tu pedido #${order.order_number} está confirmado`,
+      html,
+    }),
+  });
+}
+
 export default async function handler(request, response) {
   const cfg = env();
   const paymentId = paymentIdFrom(request);
@@ -56,7 +90,7 @@ export default async function handler(request, response) {
     const newStatus = statusMap[payment.status];
     if (!newStatus) return ack(response);
 
-    const orderRes = await rest(cfg, `orders?id=eq.${encodeURIComponent(orderId)}&select=id,status`);
+    const orderRes = await rest(cfg, `orders?id=eq.${encodeURIComponent(orderId)}&select=id,status,order_number,customer_name,customer_email,total,public_token,shipping_method,shipping_address`);
     const order = (orderRes.ok ? await orderRes.json() : [])[0];
     if (!order) return ack(response);
     if (order.status === newStatus) return ack(response);
@@ -75,6 +109,13 @@ export default async function handler(request, response) {
       headers: { prefer: "return=minimal" },
       body: JSON.stringify({ payment_provider: "mercadopago", payment_reference: String(payment.id) }),
     });
+
+    // Con el pago acreditado le mandamos al cliente su comprobante y el link
+    // de seguimiento. Solo si dejó un email al comprar.
+    if (newStatus === "paid" && order.customer_email) {
+      const origin = `https://${request.headers["x-forwarded-host"] || request.headers.host}`;
+      await sendCustomerEmail(order, origin).catch(() => {});
+    }
     return ack(response);
   } catch (error) {
     return ack(response);
