@@ -28,6 +28,11 @@
     .mp-qr{display:grid;gap:12px;justify-items:center;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}.mp-qr svg,.mp-qr img{width:210px;height:210px;display:block;background:#fff;border-radius:8px}.mp-qr small{color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
     .mp-steps{margin:0;padding-left:18px;color:var(--muted);line-height:1.7;max-width:640px}.mp-actions{display:flex;gap:9px;flex-wrap:wrap}
     .pay-grid{display:grid;gap:14px;grid-template-columns:minmax(220px,280px)}.pay-grid .field span{font-size:12px;font-weight:700}
+    .gallery-editor{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:4px}.gallery-editor:empty{display:none}
+    .gthumb{position:relative;width:86px;height:86px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}.gthumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .gthumb .cover{position:absolute;left:0;right:0;bottom:0;background:rgba(23,79,61,.9);color:#fff;font-size:9px;font-weight:800;text-align:center;padding:2px;letter-spacing:.06em}
+    .gthumb button{position:absolute;top:3px;border:0;width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.94);display:grid;place-items:center;font-size:12px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+    .gthumb .rm{right:3px;color:var(--danger)}.gthumb .left{left:3px}
     .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
     .mobile-head{display:none}
     .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.connection{font-size:11px;color:var(--muted);margin-top:15px}
@@ -126,12 +131,14 @@
       <div class="field"><label>Precio de venta</label><input id="price" required type="number" min="0"></div>
       <div class="field"><label>Stock</label><input id="stock" required type="number" min="0" value="1"></div>
       <div class="field full">
-        <label>Foto del producto</label>
-        <input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif">
-        <span class="field-hint">JPG, PNG, WebP o AVIF · máximo 5 MB. Se guardará en Supabase Storage.</span>
+        <label>Fotos del producto <span class="field-hint" style="font-weight:400">(hasta 5 · la primera es la portada)</span></label>
+        <div class="gallery-editor" id="galleryEditor"></div>
+        <input id="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple>
+        <span class="field-hint">Se achican y comprimen solas antes de subirse, así la tienda carga rápido en el celular.</span>
         <span class="upload-status" id="uploadStatus"></span>
       </div>
-      <div class="field full"><label>URL o ruta actual</label><input id="img" placeholder="images/producto.jpg o https://..."></div>
+      <div class="field full"><label>Video de YouTube (opcional)</label><input id="videoUrl" placeholder="https://www.youtube.com/watch?v=..."></div>
+      <input type="hidden" id="img">
       <div class="field full"><label>Descripción</label><textarea id="desc" required></textarea></div>
       <label class="check full"><input id="active" type="checkbox" checked> Producto visible en la tienda</label>
     </div>
@@ -247,8 +254,8 @@ async function persist(message="Cambios guardados", changed=null, removedId=null
    }
  }catch(error){toast("No se pudo sincronizar: "+error.message)}
 }
-function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||p.catLabel,discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
-function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",active:p.active}}
+function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,gallery:Array.isArray(p.gallery)&&p.gallery.length?p.gallery.slice(0,5):(p.img?[p.img]:[]),video_url:p.videoUrl||null,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||p.catLabel,discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
+function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",gallery:Array.isArray(p.gallery)?p.gallery:[],videoUrl:p.video_url||"",active:p.active}}
 async function ensureCategory(p){
  const {data:existing,error:readError}=await db.from("categories").select("id").eq("slug",p.cat).maybeSingle();
  if(readError)throw readError;
@@ -555,6 +562,9 @@ async function startMercadoPagoConnect(){
 function openModal(id){
  const p=products.find(x=>x.id===id);document.getElementById("modalTitle").textContent=p?"Editar producto":"Nuevo producto";document.getElementById("editingId").value=p?.id||"";
  ["title","cat","priceOld","price","stock","img","desc"].forEach(k=>document.getElementById(k).value=p?.[k]??"");
+ modalGallery=Array.isArray(p?.gallery)&&p.gallery.length?[...p.gallery]:(p?.img?[p.img]:[]);
+ renderGalleryEditor();
+ document.getElementById("videoUrl").value=p?.videoUrl||"";
  document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
@@ -590,28 +600,68 @@ document.getElementById("productRows").onclick=e=>{
  if(toggle){const p=products.find(x=>x.id===toggle.dataset.toggle);p.active=!p.active;persist(p.active?"Producto publicado":"Producto ocultado",p)}
  if(del&&confirm("¿Eliminar este producto del catálogo?")){products=products.filter(x=>x.id!==del.dataset.delete);persist("Producto eliminado",null,del.dataset.delete)}
 };
+// Las fotos se achican y comprimen en el navegador antes de subirse: una foto
+// de celular de varios MB queda en cientos de KB sin diferencia visible.
+async function compressImage(file,{maxSide=1600,quality=.82}={}){
+ const bitmap=await createImageBitmap(file);
+ const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+ const width=Math.round(bitmap.width*scale),height=Math.round(bitmap.height*scale);
+ const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+ canvas.getContext("2d").drawImage(bitmap,0,0,width,height);
+ bitmap.close?.();
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
+ if(!blob)throw new Error("No pudimos procesar la imagen.");
+ return blob;
+}
 async function uploadProductImage(file,productSlug){
  if(!remoteMode)throw new Error("Conectá Supabase para subir fotos desde el panel.");
- if(file.size>5*1024*1024)throw new Error("La foto supera el máximo de 5 MB.");
  const allowed=["image/jpeg","image/png","image/webp","image/avif"];
  if(!allowed.includes(file.type))throw new Error("Formato no permitido. Usá JPG, PNG, WebP o AVIF.");
- const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+ if(file.size>25*1024*1024)throw new Error("La foto supera los 25 MB.");
+ const blob=await compressImage(file);
  const safeName=slugify(file.name.replace(/\.[^.]+$/,""))||"foto";
- const path=`productos/${productSlug}/${Date.now()}-${safeName}.${ext}`;
- const {error}=await db.storage.from("product-media").upload(path,file,{cacheControl:"31536000",upsert:false,contentType:file.type});
+ const path=`productos/${productSlug}/${Date.now()}-${safeName}.webp`;
+ const {error}=await db.storage.from("product-media").upload(path,blob,{cacheControl:"31536000",upsert:false,contentType:"image/webp"});
  if(error)throw error;
  return db.storage.from("product-media").getPublicUrl(path).data.publicUrl;
 }
+// ===== GALERÍA DEL PRODUCTO EN EDICIÓN =====
+const MAX_GALLERY=5;
+let modalGallery=[];
+function renderGalleryEditor(){
+ document.getElementById("galleryEditor").innerHTML=modalGallery.map((url,i)=>`<div class="gthumb"><img src="${escapeHtml(url)}" alt="Foto ${i+1}">${i?`<button type="button" class="left" data-gleft="${i}" title="Mover antes">‹</button>`:`<span class="cover">PORTADA</span>`}<button type="button" class="rm" data-grm="${i}" title="Quitar">×</button></div>`).join("");
+ document.getElementById("img").value=modalGallery[0]||"";
+ document.getElementById("imageFile").disabled=modalGallery.length>=MAX_GALLERY;
+}
+document.getElementById("galleryEditor").onclick=e=>{
+ const remove=e.target.closest("[data-grm]"),left=e.target.closest("[data-gleft]");
+ if(remove){modalGallery.splice(Number(remove.dataset.grm),1);renderGalleryEditor()}
+ else if(left){const i=Number(left.dataset.gleft);[modalGallery[i-1],modalGallery[i]]=[modalGallery[i],modalGallery[i-1]];renderGalleryEditor()}
+};
+document.getElementById("imageFile").onchange=async e=>{
+ const files=[...e.target.files];e.target.value="";
+ if(!files.length)return;
+ const status=document.getElementById("uploadStatus");
+ const slug=document.getElementById("editingId").value||slugify(document.getElementById("title").value||"producto")||"producto";
+ const room=MAX_GALLERY-modalGallery.length;
+ if(files.length>room)status.textContent=`Solo entran ${room} foto${room===1?"":"s"} más.`;
+ for(const file of files.slice(0,room)){
+   try{
+     status.textContent=`Optimizando y subiendo ${file.name}…`;
+     modalGallery.push(await uploadProductImage(file,slug));
+     renderGalleryEditor();
+     status.textContent=`${modalGallery.length} de ${MAX_GALLERY} fotos.`;
+   }catch(error){status.textContent=error.message;break}
+ }
+};
 document.getElementById("productForm").onsubmit=async e=>{
  e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("productModal").close();return}const oldId=document.getElementById("editingId").value;const title=document.getElementById("title").value.trim();const category=document.getElementById("category").value.trim();
- const id=oldId||slugify(title)+"-"+Date.now().toString().slice(-4);let imageUrl=document.getElementById("img").value.trim();const file=document.getElementById("imageFile").files[0];const status=document.getElementById("uploadStatus");const submit=e.submitter;
- try{
-   submit.disabled=true;
-   if(file){status.textContent="Subiendo foto…";imageUrl=await uploadProductImage(file,id)}
-   if(!imageUrl)throw new Error("Elegí una foto o ingresá una URL.");
- }catch(error){status.textContent=error.message;submit.disabled=false;return}
+ const id=oldId||slugify(title)+"-"+Date.now().toString().slice(-4);const status=document.getElementById("uploadStatus");const submit=e.submitter;
+ const imageUrl=modalGallery[0]||"";
+ if(!imageUrl){status.textContent="Subí al menos una foto.";return}
+ submit.disabled=true;
  const existing=oldId?products.find(x=>x.id===oldId):null;
- const data={id,dbId:existing?.dbId,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:existing?.tag||{text:category,cls:""},discount:existing?.discount??"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,active:document.getElementById("active").checked};
+ const data={id,dbId:existing?.dbId,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:existing?.tag||{text:category,cls:""},discount:existing?.discount??"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,gallery:[...modalGallery],videoUrl:document.getElementById("videoUrl").value.trim(),active:document.getElementById("active").checked};
  const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado",data);document.getElementById("productModal").close();
  submit.disabled=false;
 };

@@ -594,6 +594,7 @@
             border-radius: 2rem;
             border: 1px solid var(--slate-100);
             overflow: hidden;
+            cursor: pointer;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -1215,6 +1216,68 @@
             height: 22px;
         }
 
+        /* ===== DETALLE DE PRODUCTO ===== */
+        .detail-modal {
+            position: fixed;
+            inset: 0;
+            margin: auto;
+            border: 0;
+            padding: 0;
+            width: min(1000px, calc(100% - 32px));
+            max-height: calc(100dvh - 32px);
+            border-radius: 1.5rem;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, .3);
+            overflow: hidden;
+        }
+
+        .detail-modal::backdrop { background: rgba(2, 44, 34, .68); backdrop-filter: blur(4px); }
+        .detail-wrap { display: grid; grid-template-columns: 1.05fr 1fr; max-height: calc(100dvh - 32px); }
+        .detail-close { position: absolute; top: .9rem; right: .9rem; z-index: 5; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .94); display: grid; place-items: center; cursor: pointer; color: var(--slate-700); box-shadow: 0 4px 14px rgba(0, 0, 0, .18); }
+        .detail-close:hover { background: white; color: var(--slate-900); }
+
+        .detail-media { background: var(--slate-100); display: flex; flex-direction: column; min-width: 0; }
+        .detail-stage { position: relative; aspect-ratio: 1 / 1; background: white; overflow: hidden; }
+        .detail-stage img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .detail-video { width: 100%; height: 100%; border: 0; display: block; }
+        .detail-play { position: absolute; inset: 0; display: grid; place-items: center; border: 0; background: rgba(2, 44, 34, .28); cursor: pointer; }
+        .detail-play span { width: 64px; height: 64px; border-radius: 50%; background: rgba(255, 255, 255, .95); display: grid; place-items: center; color: #dc2626; font-size: 34px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); }
+        .detail-thumbs { display: flex; gap: .5rem; padding: .75rem; overflow-x: auto; scrollbar-width: thin; }
+        .detail-thumbs button { flex: 0 0 62px; height: 62px; border-radius: .7rem; overflow: hidden; border: 2px solid transparent; background: white; cursor: pointer; padding: 0; position: relative; }
+        .detail-thumbs button.active { border-color: var(--emerald-600); }
+        .detail-thumbs img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .detail-thumbs .vid { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .35); color: white; }
+
+        .detail-info { padding: 2rem 2rem 1.5rem; overflow-y: auto; display: flex; flex-direction: column; }
+        .detail-info .product-cat { margin-bottom: .5rem; }
+        .detail-info h2 { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.12; letter-spacing: -.02em; margin-bottom: .85rem; }
+        .detail-desc { color: var(--slate-600); line-height: 1.7; margin-bottom: 1.4rem; }
+        .detail-price { display: flex; align-items: baseline; gap: .7rem; flex-wrap: wrap; margin-bottom: .35rem; }
+        .detail-price .now { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--emerald-600); }
+        .detail-price .was { text-decoration: line-through; color: var(--slate-400); font-weight: 600; }
+        .detail-badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.3rem; }
+        .detail-chip { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: .35rem .8rem; border-radius: 100px; background: var(--emerald-50); color: var(--emerald-700); }
+        .detail-chip.warn { background: #fff7ed; color: var(--amber-600); }
+        .detail-chip.out { background: var(--slate-100); color: var(--slate-500); }
+        .detail-actions { margin-top: auto; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+        .detail-qty { display: inline-flex; align-items: center; gap: .9rem; background: var(--slate-100); border-radius: .8rem; padding: .35rem; }
+        .detail-qty button { width: 36px; height: 36px; border: 0; background: white; border-radius: .6rem; cursor: pointer; font-weight: 800; font-size: 1.1rem; color: var(--slate-700); box-shadow: 0 1px 3px rgba(0, 0, 0, .1); }
+        .detail-qty button:disabled { opacity: .4; cursor: not-allowed; }
+        .detail-qty span { min-width: 22px; text-align: center; font-weight: 800; }
+        .detail-add { flex: 1; min-width: 190px; display: inline-flex; align-items: center; justify-content: center; gap: .5rem; background: var(--amber-500); color: white; border: 0; cursor: pointer; padding: 1rem 1.4rem; border-radius: .9rem; font-family: var(--font-body); font-size: .95rem; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; transition: all .3s; box-shadow: 0 8px 20px rgba(217, 119, 6, .25); }
+        .detail-add:hover:not(:disabled) { background: var(--amber-600); transform: translateY(-2px); }
+        .detail-add:disabled { background: var(--slate-200); color: var(--slate-400); cursor: not-allowed; box-shadow: none; }
+
+        @media (max-width: 860px) {
+            .detail-modal { width: 100%; max-width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; }
+            .detail-wrap { grid-template-columns: 1fr; grid-template-rows: auto 1fr; max-height: 100dvh; overflow-y: auto; }
+            .detail-stage { aspect-ratio: 4 / 3; }
+            .detail-info { padding: 1.4rem 1.25rem 2rem; }
+            .detail-actions { position: sticky; bottom: 0; background: white; padding-top: .9rem; margin-top: 1.5rem; flex-wrap: nowrap; }
+            .detail-add { min-width: 0; font-size: .8rem; padding: 1rem .8rem; letter-spacing: 0; }
+            .detail-qty { flex: 0 0 auto; }
+            .detail-qty button { width: 34px; height: 34px; }
+        }
+
         .checkout-modal {
             position: fixed;
             inset: 0;
@@ -1465,6 +1528,9 @@
             </button>
         </div>
     </aside>
+    <dialog class="detail-modal" id="detailModal" aria-label="Detalle del producto">
+        <div id="detailContent"></div>
+    </dialog>
     <dialog class="checkout-modal" id="checkoutModal">
         <div id="checkoutContent">
             <div class="checkout-head"><h3>Finalizar pedido</h3><button class="cart-close" id="checkoutClose" type="button" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button></div>
@@ -1622,6 +1688,7 @@
               if (activeFilter !== "all" && p.cat !== activeFilter) card.classList.add("hidden");
               if (soldOut(p)) card.classList.add("sold-out");
               card.dataset.cat = p.cat;
+              card.dataset.id = p.id;
               card.innerHTML = `
                 <div class="product-img">
                     <span class="product-tag ${p.tag.cls}">${p.tag.text}</span>
@@ -1656,6 +1723,98 @@
             document.getElementById("catalogEmpty").hidden = visible;
         }
         renderCatalog();
+
+        // ===== DETALLE DE PRODUCTO =====
+        const detailModal = document.getElementById("detailModal");
+        const detailContent = document.getElementById("detailContent");
+        let detailProduct = null, detailQty = 1, detailIndex = 0;
+
+        function youtubeId(url) {
+            const match = String(url || "").match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+            return match ? match[1] : "";
+        }
+        const galleryOf = p => (Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [p.img]).filter(Boolean);
+
+        function renderDetail() {
+            const p = detailProduct;
+            if (!p) return;
+            const images = galleryOf(p);
+            const video = youtubeId(p.videoUrl);
+            const stock = stockOf(p.id);
+            const inCart = cart.get(p.id) || 0;
+            const room = Math.max(0, stock - inCart);
+            const showingVideo = video && detailIndex === images.length;
+            const stage = showingVideo
+                ? `<iframe class="detail-video" src="https://www.youtube-nocookie.com/embed/${video}?rel=0&autoplay=1" title="Video de ${esc(p.title)}" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`
+                : `<img src="${esc(images[detailIndex] || images[0])}" alt="${esc(p.title)}">`;
+            const thumbs = images.map((src, i) => `<button data-thumb="${i}" class="${i === detailIndex ? "active" : ""}" aria-label="Foto ${i + 1}"><img src="${esc(src)}" alt=""></button>`).join("")
+                + (video ? `<button data-thumb="${images.length}" class="${showingVideo ? "active" : ""}" aria-label="Ver video"><img src="https://i.ytimg.com/vi/${video}/mqdefault.jpg" alt=""><span class="vid material-symbols-outlined">play_arrow</span></button>` : "");
+            const badge = stock === 0
+                ? `<span class="detail-chip out">Agotado</span>`
+                : stock <= 3 && Number.isFinite(stock) ? `<span class="detail-chip warn">Últimas ${stock} unidades</span>` : `<span class="detail-chip">Disponible</span>`;
+
+            detailContent.innerHTML = `
+                <button class="detail-close" id="detailClose" aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button>
+                <div class="detail-wrap">
+                    <div class="detail-media">
+                        <div class="detail-stage">${stage}</div>
+                        ${images.length > 1 || video ? `<div class="detail-thumbs">${thumbs}</div>` : ""}
+                    </div>
+                    <div class="detail-info">
+                        <div class="product-cat">${esc(p.catLabel)}</div>
+                        <h2>${esc(p.title)}</h2>
+                        <div class="detail-price"><span class="now">${fmt(p.price)}</span>${p.priceOld > p.price ? `<span class="was">${fmt(p.priceOld)}</span>` : ""}</div>
+                        <div class="detail-badges">${badge}${p.discount ? `<span class="detail-chip">${esc(p.discount)}</span>` : ""}</div>
+                        <p class="detail-desc">${esc(p.desc)}</p>
+                        <div class="detail-actions">
+                            <div class="detail-qty">
+                                <button id="detailMinus" aria-label="Restar" ${detailQty <= 1 ? "disabled" : ""}>−</button>
+                                <span>${detailQty}</span>
+                                <button id="detailPlus" aria-label="Sumar" ${detailQty >= room ? "disabled" : ""}>+</button>
+                            </div>
+                            <button class="detail-add" id="detailAdd" ${room < 1 ? "disabled" : ""}>
+                                <span class="material-symbols-outlined">${room < 1 ? "block" : "add_shopping_cart"}</span>
+                                ${room < 1 ? (stock === 0 ? "Agotado" : "Ya tenés todo el stock") : "Agregar al carrito"}
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.getElementById("detailClose").onclick = closeDetail;
+            detailContent.querySelectorAll("[data-thumb]").forEach(b => b.onclick = () => { detailIndex = Number(b.dataset.thumb); renderDetail(); });
+            const minus = document.getElementById("detailMinus"), plus = document.getElementById("detailPlus"), add = document.getElementById("detailAdd");
+            if (minus) minus.onclick = () => { if (detailQty > 1) { detailQty--; renderDetail(); } };
+            if (plus) plus.onclick = () => { if (detailQty < room) { detailQty++; renderDetail(); } };
+            if (add) add.onclick = () => {
+                if (room < 1) return;
+                cart.set(p.id, inCart + detailQty);
+                renderCart();
+                closeDetail();
+                openCart();
+            };
+        }
+
+        function openDetail(id) {
+            const p = PRODUCTS.find(x => x.id === id);
+            if (!p) return;
+            detailProduct = p; detailQty = 1; detailIndex = 0;
+            renderDetail();
+            if (!detailModal.open) detailModal.showModal();
+            document.body.style.overflow = "hidden";
+            if (location.hash !== "#p/" + id) history.pushState(null, "", "#p/" + id);
+        }
+        function closeDetail() {
+            if (detailModal.open) detailModal.close();
+            detailProduct = null;
+            document.body.style.overflow = "";
+            if (location.hash.startsWith("#p/")) history.pushState(null, "", location.pathname);
+        }
+        detailModal.addEventListener("close", () => { detailProduct = null; document.body.style.overflow = ""; });
+        detailModal.addEventListener("click", e => { if (e.target === detailModal) closeDetail(); });
+        window.addEventListener("popstate", () => {
+            const id = location.hash.startsWith("#p/") ? location.hash.slice(3) : "";
+            if (id) openDetail(id); else if (detailModal.open) { detailModal.close(); document.body.style.overflow = ""; }
+        });
 
         // ===== ESTADO DEL CARRITO =====
         const cart = new Map(); // id -> qty
@@ -1751,7 +1910,13 @@
         // ===== DELEGACIÓN DE EVENTOS =====
         grid.addEventListener("click", e => {
             const btn = e.target.closest("[data-add]");
-            if (!btn || btn.disabled) return;
+            if (!btn) {
+                // Cualquier otro lugar de la tarjeta abre el detalle.
+                const card = e.target.closest(".product-card");
+                if (card?.dataset.id) openDetail(card.dataset.id);
+                return;
+            }
+            if (btn.disabled) return;
             const added = addToCart(btn.dataset.add);
             if (added) {
                 btn.classList.add("added");
@@ -1978,7 +2143,9 @@
                     priceOld: Number(p.list_price || p.price),
                     price: Number(p.price),
                     stock: p.stock,
-                    img: p.image_url
+                    img: p.image_url,
+                    gallery: Array.isArray(p.gallery) ? p.gallery : [],
+                    videoUrl: p.video_url || ""
                 }));
                 [...cart.keys()].forEach(id => {
                     if (!PRODUCTS.some(product => product.id === id)) cart.delete(id);
@@ -1990,6 +2157,8 @@
                 renderFilters();
                 renderCatalog();
                 renderCart();
+                // Link compartido a un producto: se abre cuando el catálogo llegó.
+                if (location.hash.startsWith("#p/")) openDetail(location.hash.slice(3));
             } catch (error) {
                 console.warn("Se mantiene el catálogo local.", error.message);
             }
