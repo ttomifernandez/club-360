@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento del pedido | Bienestar Rural 360</title>
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="images/favicon-360.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{--green:#047857;--green-dark:#022c22;--green-soft:#ecfdf5;--ink:#0f172a;--muted:#475569;--line:#e2e8f0;--amber:#f59e0b;--red:#dc2626}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:#f8fafc;color:var(--ink);min-height:100dvh;padding:1.25rem}
+  .wrap{max-width:600px;margin:0 auto}
+  .brand{display:flex;align-items:center;gap:.7rem;justify-content:center;padding:1.5rem 0 2rem;text-decoration:none}
+  .brand img{width:52px;height:52px;border-radius:.9rem;border:1px solid var(--line);background:#fff;object-fit:contain}
+  .brand strong{font-family:'Space Grotesk',sans-serif;font-size:1.05rem;color:var(--ink)}
+  .brand span{display:block;font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:1.5rem;padding:1.75rem;box-shadow:0 12px 40px rgba(2,44,34,.06)}
+  .head{border-bottom:1px solid var(--line);padding-bottom:1.25rem;margin-bottom:1.25rem}
+  .head h1{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;line-height:1.2;margin-bottom:.35rem}
+  .head p{color:var(--muted);font-size:.92rem}
+  .state{display:inline-flex;align-items:center;gap:.45rem;margin-top:.9rem;padding:.5rem 1rem;border-radius:100px;background:var(--green-soft);color:var(--green);font-weight:800;font-size:.82rem}
+  .state.warn{background:#fff7ed;color:#b45309}.state.bad{background:#fef2f2;color:var(--red)}
+  .steps{list-style:none;margin:0 0 1.5rem}
+  .steps li{position:relative;padding:0 0 1.5rem 2.25rem;color:var(--muted)}
+  .steps li:last-child{padding-bottom:0}
+  .steps li::before{content:'';position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;border:2px solid var(--line);background:#fff}
+  .steps li::after{content:'';position:absolute;left:8px;top:20px;bottom:0;width:2px;background:var(--line)}
+  .steps li:last-child::after{display:none}
+  .steps li.done{color:var(--ink)}
+  .steps li.done::before{background:var(--green);border-color:var(--green)}
+  .steps li.done::after{background:var(--green)}
+  .steps li.now strong{color:var(--green)}
+  .steps li strong{display:block;font-size:.95rem}
+  .steps li small{font-size:.82rem}
+  .items{border-top:1px solid var(--line);padding-top:1.25rem}
+  .items h2{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.85rem}
+  .row{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;font-size:.94rem}
+  .row span{color:var(--muted)}
+  .total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:.75rem;padding-top:.9rem}
+  .total strong{font-family:'Space Grotesk',sans-serif;font-size:1.5rem;color:var(--green)}
+  .ship{margin-top:1.25rem;padding:.9rem 1rem;background:var(--green-soft);border-radius:.9rem;font-size:.9rem;line-height:1.5}
+  .wa{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:1.5rem;background:#25d366;color:#fff;text-decoration:none;padding:1rem;border-radius:.9rem;font-weight:800;font-size:.95rem}
+  .msg{text-align:center;padding:2.5rem 1rem;color:var(--muted);line-height:1.6}
+  .msg strong{display:block;font-family:'Space Grotesk',sans-serif;font-size:1.2rem;color:var(--ink);margin-bottom:.5rem}
+  .foot{text-align:center;padding:1.5rem 0;font-size:.75rem;color:#94a3b8}
+  .foot a{color:var(--green);text-decoration:none;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="brand" href="/">
+    <img src="images/logo-360.png" alt="">
+    <span><strong>Bienestar Rural 360</strong><span>Seguimiento</span></span>
+  </a>
+  <div class="card" id="card"><p class="msg">Buscando tu pedido…</p></div>
+  <p class="foot">¿Dudas con tu pedido? <a href="/" id="storeLink">Volver a la tienda</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const WA_NUMBER = "5493515929043";
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
+  const fmt = n => "$" + Number(n || 0).toLocaleString("es-AR");
+  const card = document.getElementById("card");
+
+  const STEPS = [
+    { key: "pending",   title: "Pedido recibido",   text: "Lo registramos y ya lo estamos viendo." },
+    { key: "paid",      title: "Pago confirmado",   text: "Recibimos el pago." },
+    { key: "preparing", title: "En preparación",    text: "Estamos armando tu pedido." },
+    { key: "shipped",   title: "En camino",         text: "Salió para tu domicilio." },
+    { key: "completed", title: "Entregado",         text: "¡Listo! Gracias por tu compra." }
+  ];
+
+  function show(html) { card.innerHTML = html; }
+
+  function render(order) {
+    const idx = STEPS.findIndex(s => s.key === order.status);
+    const cancelled = order.status === "cancelled";
+    const stateClass = cancelled ? "bad" : order.status === "completed" ? "" : "warn";
+    const stateText = cancelled ? "Pedido cancelado" : (STEPS[idx]?.title || "En proceso");
+
+    const steps = cancelled ? "" : `<ol class="steps">${STEPS.map((s, i) => `
+      <li class="${i < idx ? "done" : i === idx ? "done now" : ""}">
+        <strong>${esc(s.title)}</strong><small>${esc(s.text)}</small>
+      </li>`).join("")}</ol>`;
+
+    const items = (order.items || []).map(i => `
+      <div class="row"><span>${i.quantity} × ${esc(i.name)}</span><span>${fmt(i.price * i.quantity)}</span></div>`).join("");
+
+    const waText = `¡Hola! Consulto por mi pedido #${order.number}.`;
+    show(`
+      <div class="head">
+        <h1>Hola ${esc(order.name)}, tu pedido #${esc(order.number)}</h1>
+        <p>Hecho el ${new Date(order.created).toLocaleDateString("es-AR", { day: "numeric", month: "long" })}</p>
+        <span class="state ${stateClass}">${esc(stateText)}</span>
+      </div>
+      ${steps}
+      ${cancelled ? `<p class="msg" style="padding:0 0 1.25rem">Este pedido fue cancelado. Si creés que es un error, escribinos y lo resolvemos.</p>` : ""}
+      <div class="items">
+        <h2>Tu compra</h2>
+        ${items}
+        ${Number(order.discount) > 0 ? `<div class="row"><span>Descuento</span><span>−${fmt(order.discount)}</span></div>` : ""}
+        <div class="total"><span>Total</span><strong>${fmt(order.total)}</strong></div>
+      </div>
+      ${order.shipping ? `<p class="ship"><strong>Entrega:</strong> ${esc(order.shipping)}${order.address ? `<br>${esc(order.address)}` : ""}</p>` : ""}
+      <a class="wa" href="https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waText)}" target="_blank" rel="noopener">Escribinos por WhatsApp</a>
+    `);
+  }
+
+  (async function () {
+    const token = new URLSearchParams(location.search).get("p") || "";
+    if (!/^[a-f0-9]{32}$/.test(token)) {
+      return show(`<p class="msg"><strong>Link incompleto</strong>Revisá que hayas abierto el enlace completo que te enviamos por WhatsApp.</p>`);
+    }
+    try {
+      const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
+      if (!config.configured) throw new Error();
+      const db = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false, storageKey: "br360-tracking" }
+      });
+      const { data, error } = await db.rpc("order_tracking", { p_token: token });
+      if (error || !data) {
+        return show(`<p class="msg"><strong>No encontramos ese pedido</strong>Puede que el link esté incompleto. Escribinos por WhatsApp y lo vemos juntos.</p>`);
+      }
+      render(data);
+    } catch (e) {
+      show(`<p class="msg"><strong>No pudimos cargar el pedido</strong>Probá de nuevo en un momento.</p>`);
+    }
+  })();
+</script>
+</body>
+</html>

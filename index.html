@@ -1309,6 +1309,8 @@
         .cart-checkout.pay-btn:hover { background: #0087c4; }
         .cart-checkout.ghost { background: white; color: var(--slate-600); border: 1px solid var(--slate-200); box-shadow: none; }
         .cart-checkout.ghost:hover { background: var(--slate-50); color: var(--slate-900); }
+        .track-link { margin-top: 1rem; font-size: .9rem; }
+        .track-link a { color: var(--emerald-700); font-weight: 700; }
         .pay-msg { margin-top: .9rem; font-size: .85rem; color: #b33b3b; min-height: 18px; }
         .pay-banner { position: fixed; left: 50%; transform: translateX(-50%); top: 92px; z-index: 3000; max-width: min(560px, calc(100% - 24px)); background: white; border-radius: 1rem; box-shadow: 0 20px 50px rgba(0,0,0,.16); padding: 1rem 1.25rem; display: flex; gap: .75rem; align-items: flex-start; border-left: 5px solid var(--emerald-500); }
         .pay-banner.warn { border-left-color: var(--amber-500); }
@@ -1974,7 +1976,7 @@
                 total: totalPrice()
             };
         }
-        function whatsappOrder(orderNumber="", snapshot=null) {
+        function whatsappOrder(orderNumber="", snapshot=null, tracking="") {
             const order = snapshot || cartSnapshot();
             let msg = "¡Hola! Vi el catálogo de Bienestar Rural 360 y quiero hacer este pedido:\n\n";
             order.items.forEach(({ qty, p }) => {
@@ -1985,6 +1987,7 @@
             const shipCity = document.getElementById("customerCity")?.value.trim();
             if (shipMethod) msg += `\nEntrega: ${shipMethod === "envio" ? "Envío a domicilio" : "Retiro / a coordinar"}${shipAddress ? " — " + shipAddress : ""}${shipCity ? ", " + shipCity : ""}\n`;
             if(orderNumber) msg += `\nPedido registrado: #${orderNumber}\n`;
+            if(tracking) msg += `Seguilo acá: ${location.origin}/seguimiento?p=${tracking}\n`;
             msg += `\nTotal estimado: ${fmt(order.total)}\n\n¿Me confirman disponibilidad, pago y entrega? ¡Gracias!`;
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
         }
@@ -2023,9 +2026,9 @@
             const snapshot=cartSnapshot();
             if(order?.total!=null)snapshot.total=Number(order.total);
             const discount=Number(order?.discount||0);
-            const orderId=order?.order_id;
-            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>${PAYMENTS_ON&&orderId?"Ya podés pagarlo online, o coordinar el pago por WhatsApp.":"Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp."}</p>${discount>0?`<p><strong>Descuento aplicado: −${fmt(discount)}</strong></p>`:""}<p><strong>Total: ${fmt(snapshot.total)}</strong></p>${PAYMENTS_ON&&orderId?`<button class="cart-checkout pay-btn" id="payOnline" style="margin-top:1.2rem"><span class="material-symbols-outlined">credit_card</span> Pagar con Mercado Pago</button>`:""}<button class="cart-checkout${PAYMENTS_ON&&orderId?" ghost":""}" id="continueWhatsapp" style="margin-top:.7rem">${PAYMENTS_ON&&orderId?"Coordinar por WhatsApp":"Continuar por WhatsApp"}</button><p class="pay-msg" id="payMessage"></p></div>`;
-            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber,snapshot);
+            const orderId=order?.order_id;const tracking=order?.tracking||"";
+            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>${PAYMENTS_ON&&orderId?"Ya podés pagarlo online, o coordinar el pago por WhatsApp.":"Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp."}</p>${discount>0?`<p><strong>Descuento aplicado: −${fmt(discount)}</strong></p>`:""}<p><strong>Total: ${fmt(snapshot.total)}</strong></p>${PAYMENTS_ON&&orderId?`<button class="cart-checkout pay-btn" id="payOnline" style="margin-top:1.2rem"><span class="material-symbols-outlined">credit_card</span> Pagar con Mercado Pago</button>`:""}<button class="cart-checkout${PAYMENTS_ON&&orderId?" ghost":""}" id="continueWhatsapp" style="margin-top:.7rem">${PAYMENTS_ON&&orderId?"Coordinar por WhatsApp":"Continuar por WhatsApp"}</button>${tracking?`<p class="track-link"><a href="/seguimiento?p=${esc(tracking)}" target="_blank" rel="noopener">Seguir mi pedido</a></p>`:""}<p class="pay-msg" id="payMessage"></p></div>`;
+            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber,snapshot,tracking);
             const payButton=document.getElementById("payOnline");
             if(payButton)payButton.onclick=async()=>{
                 const message=document.getElementById("payMessage");message.textContent="";

@@ -62,6 +62,7 @@ export default async function handler(request, response) {
       ${Number(order.discount) > 0 ? `<p style="margin:2px 0 0;text-align:right;color:#66716b;font-size:13px">Descuento aplicado: −${money(order.discount)}</p>` : ""}
       ${order.shipping_method ? `<p style="margin:18px 0 0;padding:12px;background:#e8f1ed;border-radius:10px;font-size:14px"><strong>Entrega:</strong> ${esc(order.shipping_method)}${order.shipping_address ? ` — ${esc(order.shipping_address)}` : ""}</p>` : ""}
       ${order.notes ? `<p style="margin:10px 0 0;padding:12px;background:#f4f6f4;border-radius:10px;font-size:14px"><strong>Notas:</strong> ${esc(order.notes)}</p>` : ""}
+      ${order.public_token ? `<p style="margin:14px 0 0;font-size:13px;color:#66716b">Link de seguimiento del cliente:<br><a href="https://${esc(request.headers["x-forwarded-host"] || request.headers.host)}/seguimiento?p=${esc(order.public_token)}">ver seguimiento</a></p>` : ""}
       <div style="margin-top:24px">
         ${wa ? `<a href="${wa}" style="display:inline-block;background:#25d366;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px">Escribirle por WhatsApp</a>` : ""}
         <a href="https://club-360-eight.vercel.app/admin" style="display:inline-block;background:#174f3d;color:#fff;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:700;font-size:14px;margin-left:6px">Abrir el panel</a>
