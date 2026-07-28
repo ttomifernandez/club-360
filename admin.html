@@ -60,6 +60,7 @@
       <button data-view="products"><span class="icon">▦</span><span>Productos</span></button>
       <button data-view="categories"><span class="icon">◇</span><span>Categorías</span></button>
       <button data-view="orders"><span class="icon">▤</span><span>Pedidos</span><span class="nav-badge" id="ordersBadge" hidden>0</span></button>
+      <button data-view="customers"><span class="icon">☺</span><span>Clientes</span></button>
       <button data-view="coupons"><span class="icon">%</span><span>Cupones</span></button>
       <button data-view="users"><span class="icon">♙</span><span>Usuarios</span></button>
       <button data-view="settings"><span class="icon">⚙</span><span>Configuración</span></button>
@@ -86,6 +87,19 @@
       </section>
       <section class="view" id="categories"><div class="intro"><div><h2>Categorías</h2><p>Organizá las dos líneas de productos con libertad.</p></div><button class="btn primary" id="newCategory">+ Nueva categoría</button></div><div class="panel"><div class="panel-head"><h3>Categorías</h3></div><div id="categoryList"></div></div></section>
       <section class="view" id="orders"><div class="intro"><div><h2>Pedidos y ventas</h2><p>Seguimiento operativo de cada compra.</p></div></div><div class="notice" id="ordersNotice">El listado ya está listo. Los pedidos aparecerán al activar el checkout público.</div><div class="panel"><div class="panel-head"><h3 id="ordersSummary">Pedidos</h3><div class="tools order-tools"><input class="search" id="orderSearch" placeholder="Buscar por nombre, teléfono, email o #"><select id="orderPeriod"><option value="all">Todo el tiempo</option><option value="today">Hoy</option><option value="7d">Últimos 7 días</option><option value="month">Este mes</option><option value="prev">Mes anterior</option><option value="pickmonth">Elegir mes…</option><option value="range">Rango de fechas…</option></select><input type="month" id="orderMonth" hidden><input type="date" id="orderFrom" hidden aria-label="Desde"><input type="date" id="orderTo" hidden aria-label="Hasta"><select id="orderCategory"><option value="all">Todas las categorías</option></select><select id="orderStatusFilter"><option value="all">Todos los estados</option><option value="pending">Pendiente</option><option value="paid">Pagado</option><option value="preparing">Preparando</option><option value="shipped">Enviado</option><option value="completed">Completado</option><option value="cancelled">Cancelado</option></select><button class="btn" id="orderClear">Limpiar</button></div></div><div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th><th></th></tr></thead><tbody id="orderRows"></tbody></table></div></div></section>
+      <section class="view" id="customers">
+        <div class="intro"><div><h2>Clientes</h2><p>Quién te compra, cuánto y cuándo. Se arma solo con cada pedido.</p></div></div>
+        <div class="stats">
+          <div class="stat"><span>Clientes</span><strong id="custCount">0</strong><small>Con al menos un pedido</small></div>
+          <div class="stat"><span>Compran más de una vez</span><strong id="custRepeat">0</strong><small id="custRepeatPct">—</small></div>
+          <div class="stat"><span>Ticket promedio</span><strong id="custAvg">$0</strong><small>Por pedido no cancelado</small></div>
+          <div class="stat"><span>Mejor cliente</span><strong id="custTop" style="font-size:17px">—</strong><small id="custTopSpent">—</small></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3 id="customersSummary">Todos los clientes</h3><div class="tools"><input class="search" id="customerSearch" placeholder="Buscar por nombre, teléfono o email"></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Cliente</th><th>Contacto</th><th>Compras</th><th>Total</th><th>Última</th><th></th></tr></thead><tbody id="customerRows"></tbody></table></div>
+        </div>
+      </section>
       <section class="view" id="coupons"><div class="intro"><div><h2>Cupones</h2><p>Descuentos con vigencia y límites de uso.</p></div><button class="btn primary" id="newCoupon">+ Nuevo cupón</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Descuento</th><th>Vigencia</th><th>Usos</th><th>Estado</th><th></th></tr></thead><tbody id="couponRows"></tbody></table></div></div></section>
       <section class="view" id="users">
         <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div><button class="btn primary" id="newUserBtn" hidden>+ Nuevo usuario</button></div>
@@ -172,6 +186,11 @@
     <div class="modal-foot"><button class="btn" value="cancel">Cancelar</button><button class="btn primary" value="default">Guardar categoría</button></div>
   </form>
 </dialog>
+<dialog id="customerModal">
+  <div class="modal-head"><h3 id="customerModalTitle">Cliente</h3><button class="close" onclick="document.getElementById('customerModal').close()" aria-label="Cerrar">×</button></div>
+  <div id="customerDetail" style="padding:22px"></div>
+  <div class="modal-foot"><button class="btn" onclick="document.getElementById('customerModal').close()">Cerrar</button></div>
+</dialog>
 <dialog id="tutorialModal">
   <form method="dialog" id="tutorialForm">
     <div class="modal-head"><h3 id="tutorialModalTitle">Nuevo video</h3><button class="close" value="cancel" aria-label="Cerrar">×</button></div>
@@ -253,11 +272,11 @@ const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",s
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
 const ROLE_PERMS={
- owner:{views:["dashboard","products","categories","orders","coupons","users","settings","learn"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
- operator:{views:["dashboard","products","categories","orders","coupons","learn"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
+ owner:{views:["dashboard","products","categories","orders","coupons","users","settings","learn","customers"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
+ operator:{views:["dashboard","products","categories","orders","coupons","learn","customers"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
  catalog:{views:["dashboard","products","categories","learn"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none"},
- support:{views:["dashboard","products","categories","orders","coupons","learn"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
- auditor:{views:["dashboard","products","categories","orders","coupons","users","learn"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
+ support:{views:["dashboard","products","categories","orders","coupons","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
+ auditor:{views:["dashboard","products","categories","orders","coupons","users","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
 };
 const ALL_PERMS=ROLE_PERMS.owner;
 let perms=ALL_PERMS;
@@ -270,7 +289,7 @@ function applyPermissions(){
  document.querySelectorAll("[data-new]").forEach(b=>b.hidden=!canWrite("products"));
  document.getElementById("newCategory").hidden=!canWrite("categories");
  document.getElementById("newCoupon").hidden=!canWrite("coupons");
- render();renderCoupons();renderOrders();renderUsers();renderTutorials();
+ render();renderCoupons();renderOrders();renderUsers();renderTutorials();renderCustomers();
 }
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
@@ -429,6 +448,58 @@ document.getElementById("orderClear").onclick=()=>{
  document.getElementById("orderStatusFilter").value="all";
  syncOrderPeriodInputs();renderOrders();
 };
+// ===== CLIENTES =====
+let customers=[];
+const phoneKey=p=>{const digits=String(p||"").replace(/\D/g,"");return digits.slice(-10)||""};
+const waLink=p=>{const d=String(p||"").replace(/\D/g,"");return "https://wa.me/"+(d.length<=10?"549"+d.slice(-10):d)};
+function customerStats(c){
+ const mine=orders.filter(o=>phoneKey(o.customer_phone)===c.phone_key);
+ const valid=mine.filter(o=>o.status!=="cancelled");
+ return {pedidos:mine.length,validos:valid.length,total:valid.reduce((s,o)=>s+Number(o.total),0),ultima:mine[0]?.created_at||c.last_order_at,lista:mine};
+}
+function renderCustomers(){
+ const query=document.getElementById("customerSearch").value.trim().toLowerCase();
+ const rows=customers.map(c=>({c,s:customerStats(c)})).sort((a,b)=>new Date(b.s.ultima)-new Date(a.s.ultima));
+ const repeat=rows.filter(r=>r.s.validos>1).length;
+ const allValid=orders.filter(o=>o.status!=="cancelled");
+ const best=[...rows].sort((a,b)=>b.s.total-a.s.total)[0];
+ document.getElementById("custCount").textContent=customers.length;
+ document.getElementById("custRepeat").textContent=repeat;
+ document.getElementById("custRepeatPct").textContent=customers.length?`${Math.round(repeat/customers.length*100)}% del total`:"—";
+ document.getElementById("custAvg").textContent=allValid.length?money(allValid.reduce((s,o)=>s+Number(o.total),0)/allValid.length):"$0";
+ document.getElementById("custTop").textContent=best&&best.s.total>0?best.c.name:"—";
+ document.getElementById("custTopSpent").textContent=best&&best.s.total>0?money(best.s.total)+" en compras":"—";
+ const list=rows.filter(({c})=>!query||`${c.name} ${c.phone} ${c.email||""}`.toLowerCase().includes(query));
+ document.getElementById("customersSummary").textContent=`${list.length} ${list.length===1?"cliente":"clientes"}${list.length!==customers.length?` de ${customers.length}`:""}`;
+ document.getElementById("customerRows").innerHTML=list.length?list.map(({c,s})=>`<tr><td><button data-customer="${c.id}" style="border:0;background:none;color:var(--green);font-weight:800;text-align:left">${escapeHtml(c.name)}</button>${c.notes?'<br><small style="color:var(--muted)">Con notas</small>':""}</td><td>${escapeHtml(c.phone)}${c.email?`<br><small>${escapeHtml(c.email)}</small>`:""}</td><td>${s.validos}${s.pedidos!==s.validos?` <small style="color:var(--muted)">(+${s.pedidos-s.validos} canc.)</small>`:""}</td><td><strong>${money(s.total)}</strong></td><td>${shortDate(s.ultima)}</td><td><div class="row-actions"><a class="btn" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="Escribir por WhatsApp" style="padding:6px 10px">WhatsApp</a></div></td></tr>`).join(""):`<tr><td colspan="6" class="empty">${customers.length?"Ningún cliente coincide con la búsqueda.":"Todavía no hay clientes. Se cargan solos con cada pedido."}</td></tr>`;
+}
+async function loadCustomers(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("customers").select("*").order("last_order_at",{ascending:false});
+ customers=error?[]:(data||[]);
+ renderCustomers();
+}
+document.getElementById("customerSearch").oninput=renderCustomers;
+document.getElementById("customerRows").onclick=e=>{
+ const button=e.target.closest("[data-customer]");if(!button)return;
+ const c=customers.find(x=>x.id===button.dataset.customer);if(!c)return;
+ const s=customerStats(c);
+ const canEdit=perms.orders==="write";
+ document.getElementById("customerModalTitle").textContent=c.name;
+ document.getElementById("customerDetail").innerHTML=`<div style="display:grid;gap:16px">
+   <div><strong>${escapeHtml(c.phone)}</strong>${c.email?` · ${escapeHtml(c.email)}`:""}${c.address?`<br><span style="color:var(--muted)">${escapeHtml(c.address)}</span>`:""}<br><small style="color:var(--muted)">Cliente desde ${shortDate(c.first_order_at)}</small></div>
+   <div style="display:flex;gap:20px;flex-wrap:wrap"><span>Compras: <strong>${s.validos}</strong></span><span>Total: <strong>${money(s.total)}</strong></span><span>Promedio: <strong>${money(s.validos?s.total/s.validos:0)}</strong></span></div>
+   <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Fecha</th><th>Total</th><th>Estado</th></tr></thead><tbody>${s.lista.length?s.lista.map(o=>`<tr><td>#${o.order_number}</td><td>${shortDate(o.created_at)}</td><td>${money(o.total)}</td><td><span class="badge ${o.status}">${ORDER_LABELS[o.status]||o.status}</span></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Sin pedidos registrados.</td></tr>`}</tbody></table></div>
+   <div class="field"><label>Notas internas</label><textarea id="customerNotesBox" ${canEdit?"":"disabled"} placeholder="Preferencias, acuerdos, lo que quieras recordar">${escapeHtml(c.notes||"")}</textarea>${canEdit?`<div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn primary" id="saveCustomerNotes">Guardar notas</button></div>`:""}</div>
+ </div>`;
+ if(canEdit)document.getElementById("saveCustomerNotes").onclick=async()=>{
+   const {error}=await db.from("customers").update({notes:document.getElementById("customerNotesBox").value.trim()||null}).eq("id",c.id);
+   if(error)return toast("No se pudo guardar: "+error.message,4000);
+   await loadCustomers();toast("Notas guardadas");
+ };
+ document.getElementById("customerModal").showModal();
+};
+
 // ===== APRENDIZAJE =====
 let tutorials=[];
 const youtubeId=url=>{const m=String(url||"").match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);return m?m[1]:""};
@@ -663,7 +734,7 @@ function openModal(id){
  document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
-function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
+function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje",customers:"Clientes"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
  if(id==="settings"&&remoteMode)renderMercadoPago();else stopMpPoll();
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
@@ -840,7 +911,7 @@ async function activateSession(session){
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
- await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials()]);
+ await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers()]);
  applyPermissions();
  startOrderWatch();
  handleMercadoPagoReturn();
