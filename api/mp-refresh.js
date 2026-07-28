@@ -44,12 +44,12 @@ export async function refreshMercadoPago({ force = false } = {}) {
 }
 
 export default async function handler(request, response) {
+  // Solo con el secreto. El User-Agent lo controla el cliente, así que no
+  // sirve como credencial: sin CRON_SECRET este endpoint queda cerrado.
   const secret = process.env.CRON_SECRET || "";
   const provided = (request.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  const fromVercelCron = String(request.headers["user-agent"] || "").includes("vercel-cron");
-  if (secret ? provided !== secret : !fromVercelCron) {
-    return response.status(401).json({ error: "No autorizado." });
-  }
+  if (!secret || provided !== secret) return response.status(401).json({ error: "No autorizado." });
   const result = await refreshMercadoPago();
-  return response.status(result.error ? 500 : 200).json(result);
+  // Respuesta sin detalle: no filtra si hay cuenta conectada ni su vencimiento.
+  return response.status(result.error ? 500 : 200).json({ ok: !result.error });
 }

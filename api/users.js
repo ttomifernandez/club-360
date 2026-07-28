@@ -33,7 +33,11 @@ export default async function handler(request, response) {
 
   if (request.method === "DELETE") {
     const { userId } = request.body || {};
-    if (!userId) return response.status(400).json({ error: "Falta el usuario a eliminar." });
+    // Solo un UUID: sin esto se podrían inyectar rutas ("../") y alcanzar
+    // otros endpoints de Supabase con la clave de servicio.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(userId || ""))) {
+      return response.status(400).json({ error: "Usuario inválido." });
+    }
     if (userId === caller.id) return response.status(400).json({ error: "No podés eliminar tu propio usuario." });
     const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
       method: "DELETE",

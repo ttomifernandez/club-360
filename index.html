@@ -1691,23 +1691,23 @@
               card.dataset.id = p.id;
               card.innerHTML = `
                 <div class="product-img">
-                    <span class="product-tag ${p.tag.cls}">${p.tag.text}</span>
-                    <img src="${p.img}" alt="${p.title}" loading="lazy" width="800" height="600">
+                    <span class="product-tag ${esc(p.tag.cls)}">${esc(p.tag.text)}</span>
+                    <img src="${esc(p.img)}" alt="${esc(p.title)}" loading="lazy" width="800" height="600">
                     ${soldOut(p)
                         ? `<span class="product-tag out"><span class="material-symbols-outlined">block</span> Agotado</span>`
-                        : `<span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${p.discount}</span>`}
+                        : `<span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${esc(p.discount)}</span>`}
                 </div>
                 <div class="product-body">
-                    <div class="product-cat">${p.catLabel}</div>
-                    <h3 class="product-title">${p.title}</h3>
-                    <p class="product-desc">${p.desc}</p>
+                    <div class="product-cat">${esc(p.catLabel)}</div>
+                    <h3 class="product-title">${esc(p.title)}</h3>
+                    <p class="product-desc">${esc(p.desc)}</p>
                     <div class="product-footer">
                         <div class="product-price">
                             <span class="price-old">${fmt(p.priceOld)}</span>
                             <span class="price-value">${fmt(p.price)}</span>
                             <span class="price-label">Precio socio</span>
                         </div>
-                        <button class="product-btn" data-add="${p.id}" ${soldOut(p) ? "disabled" : ""}>
+                        <button class="product-btn" data-add="${esc(p.id)}" ${soldOut(p) ? "disabled" : ""}>
                             <span class="material-symbols-outlined">${soldOut(p) ? "block" : "add_shopping_cart"}</span> ${soldOut(p) ? "Agotado" : "Agregar"}
                         </button>
                     </div>
@@ -1877,17 +1877,17 @@
                     const row = document.createElement("div");
                     row.className = "cart-item";
                     row.innerHTML = `
-                        <img class="cart-item-img" src="${p.img}" alt="${p.title}">
+                        <img class="cart-item-img" src="${esc(p.img)}" alt="${esc(p.title)}">
                         <div class="cart-item-info">
-                            <h4>${p.title}</h4>
+                            <h4>${esc(p.title)}</h4>
                             <div class="cart-item-price">${fmt(p.price)}</div>
                             <div class="cart-qty">
-                                <button data-dec="${id}" aria-label="Restar">−</button>
+                                <button data-dec="${esc(id)}" aria-label="Restar">−</button>
                                 <span>${qty}</span>
-                                <button data-inc="${id}" aria-label="Sumar">+</button>
+                                <button data-inc="${esc(id)}" aria-label="Sumar">+</button>
                             </div>
                         </div>
-                        <button class="cart-item-remove" data-rm="${id}" aria-label="Quitar ${p.title}">
+                        <button class="cart-item-remove" data-rm="${esc(id)}" aria-label="Quitar ${esc(p.title)}">
                             <span class="material-symbols-outlined">delete</span>
                         </button>`;
                     cartItems.appendChild(row);
@@ -2094,7 +2094,8 @@
             const params = new URLSearchParams(location.search);
             const result = params.get("pago");
             if (!result) return;
-            const order = params.get("pedido");
+            // Solo dígitos: lo que llega por la URL nunca entra crudo al HTML.
+            const order = (params.get("pedido") || "").replace(/\D/g, "").slice(0, 12);
             const texts = {
                 ok: ["¡Pago recibido!", `Gracias por tu compra${order ? ` (pedido #${order})` : ""}. Te escribimos por WhatsApp para coordinar la entrega.`, ""],
                 pendiente: ["Pago en proceso", `Mercado Pago todavía está confirmando el pago${order ? ` del pedido #${order}` : ""}. Cuando se acredite, seguimos con la entrega.`, "warn"],

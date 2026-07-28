@@ -97,8 +97,8 @@ export default async function handler(request, response) {
     });
   }
 
-  // Conectar y desconectar quedan reservados a los emails habilitados.
-  if ((action === "start" || action === "disconnect") && !auth.canManage) {
+  // Todo lo que modifica el cobro queda reservado a los emails habilitados.
+  if (["start", "disconnect", "save-settings"].includes(action) && !auth.canManage) {
     return response.status(403).json({ error: "Tu usuario no está habilitado para cambiar la configuración de cobros." });
   }
 

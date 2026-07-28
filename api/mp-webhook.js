@@ -27,36 +27,41 @@ function paymentIdFrom(request) {
   return String(query["data.id"] || query.id || body?.data?.id || body?.id || "").trim() || null;
 }
 
+// Todas las respuestas son idénticas a propósito: si variaran según el caso,
+// cualquiera podría usar este endpoint para averiguar si un pago pertenece a
+// la tienda y en qué estado está.
+const ack = response => response.status(200).json({ received: true });
+
 export default async function handler(request, response) {
   const cfg = env();
   const paymentId = paymentIdFrom(request);
   // Siempre respondemos 200: si devolvemos error, Mercado Pago reintenta sin fin.
-  if (!paymentId || !cfg.supabaseUrl || !cfg.serviceKey) return response.status(200).json({ ignored: true });
+  if (!paymentId || !cfg.supabaseUrl || !cfg.serviceKey) return ack(response);
 
   try {
     const credRes = await rest(cfg, "payment_credentials?provider=eq.mercadopago&select=access_token");
     const credentials = (credRes.ok ? await credRes.json() : [])[0];
-    if (!credentials?.access_token) return response.status(200).json({ ignored: "sin credenciales" });
+    if (!credentials?.access_token) return ack(response);
 
     const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`, {
       headers: { authorization: `Bearer ${credentials.access_token}` },
     });
-    if (!payRes.ok) return response.status(200).json({ ignored: "pago no accesible" });
+    if (!payRes.ok) return ack(response);
     const payment = await payRes.json();
 
     const orderId = payment.external_reference;
-    if (!orderId) return response.status(200).json({ ignored: "sin referencia" });
+    if (!orderId) return ack(response);
 
     const statusMap = { approved: "paid", refunded: "cancelled", charged_back: "cancelled" };
     const newStatus = statusMap[payment.status];
-    if (!newStatus) return response.status(200).json({ ignored: payment.status });
+    if (!newStatus) return ack(response);
 
     const orderRes = await rest(cfg, `orders?id=eq.${encodeURIComponent(orderId)}&select=id,status`);
     const order = (orderRes.ok ? await orderRes.json() : [])[0];
-    if (!order) return response.status(200).json({ ignored: "pedido inexistente" });
-    if (order.status === newStatus) return response.status(200).json({ ok: true, sinCambios: true });
+    if (!order) return ack(response);
+    if (order.status === newStatus) return ack(response);
     // Un pedido ya cancelado no se reabre desde un aviso.
-    if (order.status === "cancelled" && newStatus === "paid") return response.status(200).json({ ignored: "pedido cancelado" });
+    if (order.status === "cancelled" && newStatus === "paid") return ack(response);
 
     await rest(cfg, `orders?id=eq.${encodeURIComponent(orderId)}`, {
       method: "PATCH",
@@ -68,8 +73,8 @@ export default async function handler(request, response) {
         updated_at: new Date().toISOString(),
       }),
     });
-    return response.status(200).json({ ok: true, status: newStatus });
+    return ack(response);
   } catch (error) {
-    return response.status(200).json({ ignored: "error interno" });
+    return ack(response);
   }
 }

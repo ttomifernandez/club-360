@@ -32,7 +32,9 @@ export default async function handler(request, response) {
   }
 
   const order = request.body?.record;
-  if (!order?.id) return response.status(200).json({ ignored: "sin pedido" });
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(order?.id || ""))) {
+    return response.status(200).json({ ignored: "sin pedido válido" });
+  }
 
   // Los ítems se leen de la base, no del aviso.
   let items = [];
