@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienestar Rural 360 | Productos rurales y cuero premium</title>
+    <title>Mates, cuchillos criollos y cuero artesanal | Bienestar Rural 360</title>
     <meta name="description"
-        content="Mates, cuchillería artesanal y artículos de cuero premium hechos a mano en Córdoba. Comprá online o coordiná tu pedido por WhatsApp.">
+        content="Mates artesanales, cuchillería criolla y artículos de cuero premium hechos a mano en Córdoba, Argentina. Comprá online con Mercado Pago o por WhatsApp. Envíos a todo el país.">
     <meta name="theme-color" content="#022c22">
     <link rel="canonical" href="https://club-360-eight.vercel.app/">
 
@@ -30,16 +30,15 @@
     <link rel="icon" href="images/favicon-360.png" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://rjknnkmfxzjhguipixhq.supabase.co">
     <!-- Fuentes sin bloquear el render: cargan como "print" y se activan al llegar. -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
         rel="stylesheet" media="print" onload="this.media='all'">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block"
         rel="stylesheet" media="print" onload="this.media='all'">
     <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
             rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block"
             rel="stylesheet">
@@ -103,9 +102,64 @@
         /* Las secciones bajo el pliegue no se calculan hasta acercarse al viewport. */
         .catalog,
         .cta-banner,
+        .about-faq,
         footer.contact {
             content-visibility: auto;
             contain-intrinsic-size: auto 900px;
+        }
+
+        /* ===== NOSOTROS + FAQ ===== */
+        .about-faq {
+            background: white;
+            padding: 5.5rem 1.5rem;
+        }
+
+        .about-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .faq-title {
+            font-family: var(--font-display);
+            font-size: 1.45rem;
+            letter-spacing: -.01em;
+            margin: 3rem 0 1.2rem;
+        }
+
+        .faq-item {
+            border: 1px solid var(--slate-200);
+            border-radius: .9rem;
+            margin-bottom: .8rem;
+            background: var(--slate-50);
+        }
+
+        .faq-item summary {
+            cursor: pointer;
+            padding: 1.05rem 2.6rem 1.05rem 1.2rem;
+            font-weight: 700;
+            list-style: none;
+            position: relative;
+        }
+
+        .faq-item summary::-webkit-details-marker { display: none; }
+
+        .faq-item summary::after {
+            content: '+';
+            position: absolute;
+            right: 1.1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.35rem;
+            font-weight: 400;
+            color: var(--emerald-600);
+        }
+
+        .faq-item[open] summary::after { content: '–'; }
+
+        .faq-item > p {
+            padding: 0 1.2rem 1.1rem;
+            color: var(--slate-500);
+            line-height: 1.65;
         }
 
         /* Hasta que llega la fuente de iconos, cada icono reserva 1em (su tamaño
@@ -1555,6 +1609,38 @@
             }
         }
     </style>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "OnlineStore",
+        "name": "Bienestar Rural 360",
+        "url": "https://club-360-eight.vercel.app/",
+        "logo": "https://club-360-eight.vercel.app/images/logo-360.webp",
+        "image": "https://club-360-eight.vercel.app/images/og-tienda.jpg",
+        "description": "Tienda argentina de mates artesanales, cuchillería criolla y artículos de cuero premium hechos a mano en Córdoba. Envíos a todo el país.",
+        "address": { "@type": "PostalAddress", "addressLocality": "Córdoba", "addressRegion": "Córdoba", "addressCountry": "AR" },
+        "areaServed": { "@type": "Country", "name": "Argentina" },
+        "contactPoint": { "@type": "ContactPoint", "contactType": "customer service", "telephone": "+54-9-351-592-9043", "availableLanguage": "es" },
+        "paymentAccepted": "Mercado Pago",
+        "currenciesAccepted": "ARS"
+    }
+    </script>
+    <script type="application/ld+json">
+    { "@context": "https://schema.org", "@type": "WebSite", "name": "Bienestar Rural 360", "url": "https://club-360-eight.vercel.app/", "inLanguage": "es-AR" }
+    </script>
+    <script type="application/ld+json" id="faqSchema">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            { "@type": "Question", "name": "¿Hacen envíos a todo el país?", "acceptedAnswer": { "@type": "Answer", "text": "Sí, enviamos a toda la Argentina. El costo y el plazo se coordinan al confirmar el pedido. También podés retirar en Córdoba o coordinar la entrega por WhatsApp." } },
+            { "@type": "Question", "name": "¿Qué medios de pago aceptan?", "acceptedAnswer": { "@type": "Answer", "text": "Podés pagar online con Mercado Pago (tarjetas de crédito, débito o dinero en cuenta) o coordinar el pago por WhatsApp al confirmar tu pedido." } },
+            { "@type": "Question", "name": "¿Los productos son realmente artesanales?", "acceptedAnswer": { "@type": "Answer", "text": "Sí. Los mates, cuchillos y artículos de cuero se hacen a mano con materiales seleccionados. Por eso cada pieza puede tener pequeñas variaciones que la hacen única." } },
+            { "@type": "Question", "name": "¿Cómo cuido los artículos de cuero?", "acceptedAnswer": { "@type": "Answer", "text": "Guardalos secos y lejos del sol directo. Cada tanto, hidratá el cuero con crema o grasa específica para que conserve la flexibilidad y el color." } },
+            { "@type": "Question", "name": "¿Cómo se cura un mate de calabaza?", "acceptedAnswer": { "@type": "Answer", "text": "Llenalo con yerba usada y agua caliente, dejalo reposar 24 horas y repetí el proceso una vez más. Después raspá suavemente el interior y ya está listo. Los mates de acero, vidrio o cerámica no necesitan curado." } }
+        ]
+    }
+    </script>
     <script>
         // Muestra los iconos cuando la fuente está lista; a los 3 s los suelta igual.
         (function () {
@@ -1683,6 +1769,39 @@
         </div>
     </section>
 
+    <!-- NOSOTROS + FAQ (texto real para buscadores y motores de IA; editable desde el panel) -->
+    <section class="about-faq" id="nosotros">
+        <div class="about-inner">
+            <div class="section-header animate-on-scroll">
+                <h2 data-text="about_title">Mates, cuchillos y cuero artesanal desde Córdoba</h2>
+                <p data-text="about_text">Bienestar Rural 360 es una tienda argentina especializada en mates artesanales, cuchillería criolla y marroquinería de cuero premium. Cada pieza está hecha a mano con materiales seleccionados y terminaciones de primera. Elegís en el catálogo, pagás online con Mercado Pago o coordinás tu pedido por WhatsApp, y lo recibís en cualquier punto del país.</p>
+            </div>
+            <h3 class="faq-title" data-text="faq_title">Preguntas frecuentes</h3>
+            <div class="faq-list" id="faqList">
+                <details class="faq-item">
+                    <summary data-text="faq1_q">¿Hacen envíos a todo el país?</summary>
+                    <p data-text="faq1_a">Sí, enviamos a toda la Argentina. El costo y el plazo se coordinan al confirmar el pedido. También podés retirar en Córdoba o coordinar la entrega por WhatsApp.</p>
+                </details>
+                <details class="faq-item">
+                    <summary data-text="faq2_q">¿Qué medios de pago aceptan?</summary>
+                    <p data-text="faq2_a">Podés pagar online con Mercado Pago (tarjetas de crédito, débito o dinero en cuenta) o coordinar el pago por WhatsApp al confirmar tu pedido.</p>
+                </details>
+                <details class="faq-item">
+                    <summary data-text="faq3_q">¿Los productos son realmente artesanales?</summary>
+                    <p data-text="faq3_a">Sí. Los mates, cuchillos y artículos de cuero se hacen a mano con materiales seleccionados. Por eso cada pieza puede tener pequeñas variaciones que la hacen única.</p>
+                </details>
+                <details class="faq-item">
+                    <summary data-text="faq4_q">¿Cómo cuido los artículos de cuero?</summary>
+                    <p data-text="faq4_a">Guardalos secos y lejos del sol directo. Cada tanto, hidratá el cuero con crema o grasa específica para que conserve la flexibilidad y el color.</p>
+                </details>
+                <details class="faq-item">
+                    <summary data-text="faq5_q">¿Cómo se cura un mate de calabaza?</summary>
+                    <p data-text="faq5_a">Llenalo con yerba usada y agua caliente, dejalo reposar 24 horas y repetí el proceso una vez más. Después raspá suavemente el interior y ya está listo. Los mates de acero, vidrio o cerámica no necesitan curado.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="contact">
         <div class="footer-bar">
@@ -1692,6 +1811,7 @@
                     <span class="material-symbols-outlined">location_on</span>
                     <span data-text="footer_location">Córdoba, Argentina</span>
                 </span>
+                <a href="#nosotros">Preguntas frecuentes</a>
                 <a href="#inicio">Volver al Inicio</a>
             </div>
         </div>
@@ -1755,7 +1875,6 @@
         </svg>
     </a>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // ===== DATOS DE PRODUCTOS =====
         const WA_NUMBER = "5493515929043";
@@ -1766,10 +1885,56 @@
 
         // Los textos de la home se editan desde el panel. Se aplican como
         // texto plano (nunca como HTML), así no hay forma de inyectar nada.
+        // Cliente mínimo de PostgREST con la misma forma {data, error} que
+        // devolvía supabase-js. La tienda solo lee tablas públicas y llama
+        // al RPC place_order, así que la librería entera era innecesaria.
+        function restClient(url, key) {
+            const base = { apikey: key, Authorization: "Bearer " + key };
+            async function go(path, opts) {
+                try {
+                    const r = await fetch(`${url}/rest/v1/${path}`, opts
+                        ? { ...opts, headers: { ...base, "Content-Type": "application/json" } }
+                        : { headers: base });
+                    const body = await r.json().catch(() => null);
+                    if (!r.ok) return { data: null, error: { message: body?.message || body?.hint || `Error ${r.status}` } };
+                    return { data: body, error: null };
+                } catch (e) {
+                    return { data: null, error: { message: e.message } };
+                }
+            }
+            return {
+                select: (table, query) => go(`${table}?${query}`),
+                rpc: (fn, params) => go(`rpc/${fn}`, { method: "POST", body: JSON.stringify(params) })
+            };
+        }
+
         function applySiteTexts(rows) {
             (rows || []).forEach(row => {
                 TEXTS[row.key] = row.value;
                 document.querySelectorAll(`[data-text="${row.key}"]`).forEach(el => { el.textContent = row.value; });
+            });
+            syncFaq();
+        }
+
+        // Una pregunta vaciada desde el panel oculta el ítem. El schema FAQPage
+        // se regenera para que siempre coincida con lo que se ve.
+        function syncFaq() {
+            const items = [...document.querySelectorAll("#faqList .faq-item")];
+            items.forEach(d => {
+                const q = d.querySelector("summary").textContent.trim();
+                const a = d.querySelector("p").textContent.trim();
+                d.hidden = !(q && a);
+            });
+            const schema = document.getElementById("faqSchema");
+            if (!schema) return;
+            schema.textContent = JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "FAQPage",
+                "mainEntity": items.filter(d => !d.hidden).map(d => ({
+                    "@type": "Question",
+                    "name": d.querySelector("summary").textContent.trim(),
+                    "acceptedAnswer": { "@type": "Answer", "text": d.querySelector("p").textContent.trim() }
+                }))
             });
         }
 
@@ -2415,18 +2580,16 @@
         async function loadSharedCatalog() {
             try {
                 const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
-                if (!config.configured || !window.supabase) return;
+                if (!config.configured) return;
                 PAYMENTS_ON = Boolean(config.payments);
-                // La tienda es siempre anónima: sin persistSession y con storageKey
-                // propio para no levantar la sesión del panel (mismo origen).
-                const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-                    auth: { persistSession: false, autoRefreshToken: false, storageKey: "br369-store-public" }
-                });
+                // La tienda es siempre anónima: habla con PostgREST por fetch,
+                // sin supabase-js ni sesión posible (~120 KB y ~1 s de JS menos).
+                const remoteDb = restClient(config.supabaseUrl, config.supabaseAnonKey);
                 const [{ data, error }, categoryResult, textResult, bannerResult] = await Promise.all([
-                    remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at"),
-                    remoteDb.from("categories").select("name,slug").eq("active", true).order("sort_order"),
-                    remoteDb.from("site_texts").select("key,value"),
-                    remoteDb.from("hero_banners").select("*").eq("active", true).order("slot")
+                    remoteDb.select("products", "select=*,categories(name,slug)&active=eq.true&order=created_at"),
+                    remoteDb.select("categories", "select=name,slug&active=eq.true&order=sort_order"),
+                    remoteDb.select("site_texts", "select=key,value"),
+                    remoteDb.select("hero_banners", "select=*&active=eq.true&order=slot")
                 ]);
                 if (!textResult.error) applySiteTexts(textResult.data);
                 if (!bannerResult.error) renderHero(bannerResult.data);

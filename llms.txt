@@ -1,0 +1,21 @@
+# Bienestar Rural 360
+
+> Tienda online argentina de mates artesanales, cuchillería criolla y artículos de cuero premium hechos a mano en Córdoba. Envíos a todo el país. Pagos online con Mercado Pago o pedido coordinado por WhatsApp.
+
+## Qué vendemos
+
+- Mates y yerberas artesanales (mate imperial, sets materos, bombillas)
+- Cuchillos criollos y cuchillería artesanal (cabos de ciervo y maderas nobles)
+- Marroquinería de cuero premium: bolsos, mochilas y accesorios hechos a mano
+
+## Cómo comprar
+
+- Catálogo con precios en pesos argentinos (ARS): https://club-360-eight.vercel.app/#catalogo
+- Pedidos y consultas por WhatsApp: https://wa.me/5493515929043
+- Pago online con Mercado Pago o coordinado por WhatsApp
+- Envíos a toda la Argentina; retiro a coordinar en Córdoba
+
+## Páginas
+
+- [Tienda](https://club-360-eight.vercel.app/): catálogo completo, preguntas frecuentes y datos del negocio
+- [Seguimiento de pedido](https://club-360-eight.vercel.app/seguimiento): estado de un pedido por número y teléfono

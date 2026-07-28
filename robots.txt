@@ -1,0 +1,10 @@
+# Bienestar Rural 360 — https://club-360-eight.vercel.app
+# Todos los bots (incluidos GPTBot, ClaudeBot, PerplexityBot, Google-Extended)
+# son bienvenidos en la tienda. El panel y la API no son contenido.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+
+Sitemap: https://club-360-eight.vercel.app/sitemap.xml
