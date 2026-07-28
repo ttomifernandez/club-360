@@ -1525,15 +1525,16 @@
         .checkout-form { padding: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .checkout-field { display: grid; gap: .45rem; }
         .checkout-field.full { grid-column: 1 / -1; }
-        .checkout-field label { font-size: .78rem; font-weight: 800; color: var(--slate-700); }
-        .checkout-field input,.checkout-field textarea,.checkout-field select { width: 100%; border: 1px solid var(--slate-200); border-radius: .8rem; padding: .85rem; outline: none; font-family: var(--font-body); background: white; }
+        .checkout-field label { font-size: .9rem; font-weight: 800; color: var(--slate-900); }
+        /* 1rem: legible y evita el zoom automático de iOS al tocar el campo */
+        .checkout-field input,.checkout-field textarea,.checkout-field select { width: 100%; border: 1px solid var(--slate-200); border-radius: .8rem; padding: .85rem; outline: none; font-family: var(--font-body); font-size: 1rem; color: var(--slate-900); background: white; }
         .checkout-field input:focus,.checkout-field textarea:focus,.checkout-field select:focus { border-color: var(--emerald-600); box-shadow: 0 0 0 3px var(--emerald-100); }
         .checkout-summary { grid-column: 1 / -1; padding: 1rem; background: var(--emerald-50); border-radius: 1rem; display: flex; justify-content: space-between; align-items: center; }
-        .checkout-message { grid-column: 1 / -1; min-height: 20px; color: #b33b3b; font-size: .82rem; }
+        .checkout-message { grid-column: 1 / -1; min-height: 20px; color: #b33b3b; font-size: .92rem; }
         /* La botonera queda pegada al fondo visible del modal: aunque el
            teclado del celular tape la mitad, el botón de confirmar se ve. */
         .checkout-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .7rem; position: sticky; bottom: 0; background: white; padding: .7rem 0 .2rem; border-top: 1px solid var(--slate-100); }
-        .checkout-actions button { border: 1px solid var(--slate-200); border-radius: .8rem; padding: .8rem 1rem; font-weight: 800; background: white; }
+        .checkout-actions button { border: 1px solid var(--slate-200); border-radius: .8rem; padding: .8rem 1rem; font-family: var(--font-body); font-size: 1rem; font-weight: 800; background: white; }
         .checkout-actions .confirm { background: var(--emerald-700); color: white; border-color: var(--emerald-700); }
         .order-success { padding: 2rem; text-align: center; }
         .cart-checkout.pay-btn { background: #009ee3; box-shadow: 0 10px 25px rgba(0,158,227,.25); }
@@ -1604,6 +1605,42 @@
                 width: 50px;
                 height: 50px;
             }
+        }
+
+        /* ===== LEGIBILIDAD EN EL CELULAR =====
+           Las letras más chicas suben de tamaño y se oscurecen para leer
+           sin esfuerzo. Solo tamaño y color: la estructura no se toca. */
+        @media (max-width: 768px) {
+            .filter-btn { font-size: 0.9rem; }
+            .product-tag { font-size: 0.75rem; }
+            .product-tag.discount { font-size: 0.85rem; }
+            .product-cat { font-size: 0.78rem; color: var(--emerald-700); }
+            .product-desc { font-size: 1.05rem; color: var(--slate-700); }
+            .product-price .price-old { font-size: 1rem; color: var(--slate-500); }
+            .product-price .price-label { font-size: 0.78rem; color: var(--emerald-700); }
+            .product-btn { font-size: 0.9rem; }
+            .detail-chip { font-size: 0.85rem; }
+            .detail-desc { font-size: 1.05rem; color: var(--slate-700); }
+            .detail-price .was { font-size: 1.05rem; color: var(--slate-500); }
+
+            .cart-empty p { color: var(--slate-600); }
+            .cart-empty small { font-size: 0.95rem; color: var(--slate-500); }
+            .cart-item-info h4 { font-size: 1rem; }
+            .cart-item-price { font-size: 0.95rem; color: var(--emerald-700); }
+            .cart-qty span { font-size: 1rem; }
+            .cart-total span { font-size: 0.95rem; color: var(--slate-700); }
+            .cart-note { font-size: 0.9rem; color: var(--slate-600); }
+            .cart-keep { font-size: 1rem; }
+
+            .checkout-field label { font-size: 0.95rem; }
+            .checkout-message { font-size: 0.95rem; }
+            .track-link { font-size: 1rem; }
+            .pay-msg { font-size: 0.95rem; }
+            .pay-banner p { font-size: 0.95rem; color: var(--slate-700); }
+
+            /* Fondos oscuros: acá lo que suma contraste es aclarar, no oscurecer */
+            .marquee-item { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+            .footer-bar { font-size: 0.75rem; color: var(--slate-600); }
         }
 
         @media (prefers-reduced-motion: reduce) {
