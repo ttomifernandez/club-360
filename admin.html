@@ -516,7 +516,7 @@ function renderCustomers(){
  document.getElementById("custTopSpent").textContent=best&&best.s.total>0?money(best.s.total)+" en compras":"—";
  const list=rows.filter(({c})=>!query||`${c.name} ${c.phone} ${c.email||""}`.toLowerCase().includes(query));
  document.getElementById("customersSummary").textContent=`${list.length} ${list.length===1?"cliente":"clientes"}${list.length!==customers.length?` de ${customers.length}`:""}`;
- document.getElementById("customerRows").innerHTML=list.length?list.map(({c,s})=>`<tr><td><button data-customer="${c.id}" style="border:0;background:none;color:var(--green);font-weight:800;text-align:left">${escapeHtml(c.name)}</button>${c.notes?'<br><small style="color:var(--muted)">Con notas</small>':""}</td><td>${escapeHtml(c.phone)}${c.email?`<br><small>${escapeHtml(c.email)}</small>`:""}</td><td>${s.validos}${s.pedidos!==s.validos?` <small style="color:var(--muted)">(+${s.pedidos-s.validos} canc.)</small>`:""}</td><td><strong>${money(s.total)}</strong></td><td>${shortDate(s.ultima)}</td><td><div class="row-actions"><a class="btn" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="Escribir por WhatsApp" style="padding:6px 10px">WhatsApp</a></div></td></tr>`).join(""):`<tr><td colspan="6" class="empty">${customers.length?"Ningún cliente coincide con la búsqueda.":"Todavía no hay clientes. Se cargan solos con cada pedido."}</td></tr>`;
+ document.getElementById("customerRows").innerHTML=list.length?list.map(({c,s})=>`<tr><td><button data-customer="${c.id}" style="border:0;background:none;color:var(--green);font-weight:800;text-align:left">${escapeHtml(c.name)}</button>${c.notes?'<br><small style="color:var(--muted)">Con notas</small>':""}</td><td>${escapeHtml(c.phone)}${c.email?`<br><small>${escapeHtml(c.email)}</small>`:""}</td><td>${s.validos}${s.pedidos!==s.validos?` <small style="color:var(--muted)">(+${s.pedidos-s.validos} canc.)</small>`:""}</td><td><strong>${money(s.total)}</strong></td><td>${shortDate(s.ultima)}</td><td><div class="row-actions"><a class="btn" href="${waLink(c.phone)}" target="_blank" rel="noopener" title="Escribir por WhatsApp" style="padding:6px 10px">WhatsApp</a>${perms.remove?`<button data-customer-del="${c.id}" title="Eliminar ficha">⌫</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="6" class="empty">${customers.length?"Ningún cliente coincide con la búsqueda.":"Todavía no hay clientes. Se cargan solos con cada pedido."}</td></tr>`;
 }
 async function loadCustomers(){
  if(!remoteMode)return;
@@ -525,7 +525,17 @@ async function loadCustomers(){
  renderCustomers();
 }
 document.getElementById("customerSearch").oninput=renderCustomers;
-document.getElementById("customerRows").onclick=e=>{
+document.getElementById("customerRows").onclick=async e=>{
+ const del=e.target.closest("[data-customer-del]");
+ if(del){
+   const c=customers.find(x=>x.id===del.dataset.customerDel);
+   const s=c?customerStats(c):{pedidos:0};
+   if(!confirm(`¿Eliminar la ficha de ${c?.name}?${s.pedidos?`\n\nSus ${s.pedidos} pedido${s.pedidos>1?"s":""} se conservan; solo se borra la ficha con sus notas. Si vuelve a comprar, se crea de nuevo.`:""}`))return;
+   const {error}=await db.from("customers").delete().eq("id",del.dataset.customerDel);
+   if(error)return toast("No se pudo eliminar: "+error.message,4000);
+   await loadCustomers();toast("Ficha eliminada");
+   return;
+ }
  const button=e.target.closest("[data-customer]");if(!button)return;
  const c=customers.find(x=>x.id===button.dataset.customer);if(!c)return;
  const s=customerStats(c);
