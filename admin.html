@@ -61,6 +61,19 @@
     .tab{border:0;background:none;padding:11px 16px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
     .tab:hover{color:var(--ink)}.tab.active{color:var(--green);border-bottom-color:var(--green)}
     .tab-panel{display:none}.tab-panel.active{display:block}
+    .banner-card{border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;width:100%;max-width:780px;background:#fff}
+    .banner-card.off{opacity:.62;background:var(--paper)}
+    .banner-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .banner-head strong{font:800 14px Manrope}
+    .banner-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:720px){.banner-grid{grid-template-columns:1fr}}
+    .banner-grid .full{grid-column:1/-1}
+    .banner-grid label{display:grid;gap:5px;font-size:12px;font-weight:700}
+    .banner-grid input{border:1px solid var(--line);padding:10px 11px;border-radius:9px;outline:none;font:inherit;width:100%}
+    .banner-grid input:focus{border-color:var(--green2);box-shadow:0 0 0 3px var(--soft)}
+    .banner-img{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+    .banner-img img{width:132px;height:74px;object-fit:cover;border-radius:9px;border:1px solid var(--line);background:var(--soft)}
+    .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
     .text-row{display:grid;gap:6px;width:100%;max-width:760px;padding-bottom:16px;border-bottom:1px solid var(--line)}
     .text-row:last-child{border-bottom:0;padding-bottom:0}
     .text-row .head{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -170,7 +183,7 @@
       </section>
       <section class="view" id="settings">
         <div class="intro"><div><h2>Configuración</h2><p>Cobros, conexiones y textos de la tienda.</p></div></div>
-        <div class="tabs"><button class="tab active" data-tab="pay">Método de pago</button><button class="tab" data-tab="texts">Textos de la home</button></div>
+        <div class="tabs"><button class="tab active" data-tab="pay">Método de pago</button><button class="tab" data-tab="texts">Textos de la home</button><button class="tab" data-tab="banners">Banners del inicio</button></div>
         <div class="tab-panel active" id="tabPay">
         <div class="panel">
           <div class="panel-head"><h3>Mercado Pago</h3><span class="pill off" id="mpBadge">Sin conectar</span></div>
@@ -191,6 +204,12 @@
             <div class="mp-actions"><button class="btn primary" id="savePayOptions">Guardar opciones</button></div>
           </div>
         </div>
+        </div>
+        <div class="tab-panel" id="tabBanners">
+          <div class="panel">
+            <div class="panel-head"><h3>Banners del inicio</h3><span class="dash-note">Hasta 3. Se muestran en carrusel; si dejás uno solo activo no rota.</span></div>
+            <div class="mp-body" id="bannersBody"><p class="mp-loading">Cargando…</p></div>
+          </div>
         </div>
         <div class="tab-panel" id="tabTexts">
           <div class="panel">
@@ -847,12 +866,81 @@ document.getElementById("userForm").onsubmit=async e=>{
  if(error)return toast("No se pudo guardar: "+error.message,4000);
  document.getElementById("userModal").close();await loadRemoteAdminData();toast("Usuario actualizado");
 };
+// ===== BANNERS DEL INICIO =====
+let banners=[];
+async function loadBanners(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("hero_banners").select("*").order("slot");
+ banners=error?[]:(data||[]);
+}
+function renderBanners(){
+ const body=document.getElementById("bannersBody");
+ const canEdit=currentRole==="owner";
+ if(!banners.length){body.innerHTML=`<p>Todavía no están creados los banners. Corré el archivo hero-banners.sql en Supabase.</p>`;return}
+ body.innerHTML=banners.map(b=>`<div class="banner-card ${b.active?"":"off"}" data-slot="${b.slot}">
+   <div class="banner-head"><strong>Banner ${b.slot}</strong>
+     <label class="switch"><input type="checkbox" data-field="active" ${b.active?"checked":""} ${canEdit?"":"disabled"}> Mostrar en la tienda</label>
+   </div>
+   <div class="banner-grid">
+     <label class="full">Etiqueta chica de arriba<input data-field="kicker" value="${escapeHtml(b.kicker)}" placeholder="Ej. Nueva colección" ${canEdit?"":"disabled"}></label>
+     <label>Título<input data-field="title" value="${escapeHtml(b.title)}" placeholder="Ej. ESENCIA RURAL" ${canEdit?"":"disabled"}></label>
+     <label>Título resaltado<input data-field="title_alt" value="${escapeHtml(b.title_alt)}" placeholder="Ej. CALIDAD PREMIUM" ${canEdit?"":"disabled"}></label>
+     <label class="full">Texto<input data-field="text" value="${escapeHtml(b.text)}" placeholder="Una línea que acompañe al título" ${canEdit?"":"disabled"}></label>
+     <label>Texto del botón<input data-field="cta_label" value="${escapeHtml(b.cta_label)}" placeholder="VER CATÁLOGO" ${canEdit?"":"disabled"}></label>
+     <label>A dónde lleva<input data-field="cta_link" value="${escapeHtml(b.cta_link)}" placeholder="#catalogo" ${canEdit?"":"disabled"}></label>
+     <div class="full banner-img">
+       <img src="${escapeHtml(b.image_url||"images/hero-campo.jpg")}" alt="">
+       <div style="display:grid;gap:6px">
+         <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" data-field="file" ${canEdit?"":"disabled"}>
+         <span class="field-hint">Opcional. Sin imagen usa el fondo del campo. Se comprime sola.</span>
+         <span class="upload-status" data-field="status"></span>
+       </div>
+       ${b.image_url?`<button class="btn danger" data-clear="${b.slot}" ${canEdit?"":"disabled"}>Quitar imagen</button>`:""}
+     </div>
+   </div>
+   ${canEdit?`<div class="mp-actions"><button class="btn primary" data-save="${b.slot}">Guardar banner ${b.slot}</button></div>`:""}
+ </div>`).join("");
+
+ body.querySelectorAll("[data-slot]").forEach(card=>{
+   const slot=Number(card.dataset.slot);
+   const banner=banners.find(b=>b.slot===slot);
+   const val=name=>card.querySelector(`[data-field="${name}"]`);
+   const status=val("status");
+   const file=val("file");
+   if(file)file.onchange=async e=>{
+     const f=e.target.files[0];e.target.value="";
+     if(!f)return;
+     try{
+       status.textContent="Optimizando y subiendo…";
+       banner.image_url=await uploadProductImage(f,"banner-"+slot);
+       card.querySelector(".banner-img img").src=banner.image_url;
+       status.textContent="Imagen lista. Acordate de guardar.";
+     }catch(error){status.textContent=error.message}
+   };
+   const clear=card.querySelector("[data-clear]");
+   if(clear)clear.onclick=()=>{banner.image_url=null;card.querySelector(".banner-img img").src="images/hero-campo.jpg";clear.remove();status.textContent="Imagen quitada. Acordate de guardar."};
+   const save=card.querySelector("[data-save]");
+   if(save)save.onclick=async()=>{
+     save.disabled=true;save.textContent="Guardando…";
+     const row={
+       kicker:val("kicker").value.trim(),title:val("title").value.trim(),title_alt:val("title_alt").value.trim(),
+       text:val("text").value.trim(),cta_label:val("cta_label").value.trim(),cta_link:val("cta_link").value.trim()||"#catalogo",
+       image_url:banner.image_url||null,active:val("active").checked
+     };
+     const {error}=await db.from("hero_banners").update(row).eq("slot",slot);
+     save.disabled=false;save.textContent=`Guardar banner ${slot}`;
+     if(error)return toast("No se pudo guardar: "+error.message,4000);
+     await loadBanners();renderBanners();toast(`Banner ${slot} guardado`);
+   };
+ });
+}
+
 // ===== TEXTOS DE LA HOME =====
 let siteTexts=[];
 document.querySelectorAll(".tab").forEach(tab=>tab.onclick=()=>{
  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
- document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id===(tab.dataset.tab==="pay"?"tabPay":"tabTexts")));
- if(tab.dataset.tab==="texts")renderSiteTexts();else stopMpPoll();
+ document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id==={pay:"tabPay",texts:"tabTexts",banners:"tabBanners"}[tab.dataset.tab]));
+ if(tab.dataset.tab==="texts")renderSiteTexts();else if(tab.dataset.tab==="banners")renderBanners();else stopMpPoll();
 });
 async function loadSiteTexts(){
  if(!remoteMode)return;
@@ -1218,7 +1306,7 @@ async function activateSession(session){
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
- await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts()]);
+ await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts(),loadBanners()]);
  applyPermissions();
  startOrderWatch();
  handleMercadoPagoReturn();

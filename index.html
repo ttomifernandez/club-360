@@ -422,6 +422,92 @@
             z-index: 1;
         }
 
+        .hero-slides {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            display: grid;
+        }
+
+        .hero-slide {
+            grid-area: 1 / 1;
+            display: flex;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(14px);
+            transition: opacity .6s ease, transform .6s ease, visibility .6s;
+        }
+
+        .hero-slide.is-active { opacity: 1; visibility: visible; transform: none; }
+
+        .hero-slide-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity .6s ease;
+        }
+
+        .hero-slide-bg.is-active { opacity: .32; }
+
+        .hero-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 4;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .22);
+            background: rgba(2, 44, 34, .35);
+            backdrop-filter: blur(6px);
+            color: white;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+        .hero-arrow:hover { background: rgba(2, 44, 34, .6); border-color: rgba(255, 255, 255, .45); }
+        .hero-arrow.prev { left: 1.25rem; }
+        .hero-arrow.next { right: 1.25rem; }
+        .hero-arrow[hidden] { display: none; }
+
+        .hero-dots {
+            position: absolute;
+            bottom: 1.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+            display: flex;
+            gap: .5rem;
+        }
+
+        .hero-dots[hidden] { display: none; }
+
+        .hero-dots button {
+            width: 32px;
+            height: 4px;
+            border: 0;
+            padding: 0;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, .3);
+            cursor: pointer;
+            transition: background .3s, width .3s;
+        }
+
+        .hero-dots button.on { background: var(--emerald-400); width: 46px; }
+
+        @media (max-width: 768px) {
+            .hero-arrow { display: none; }
+            .hero-dots { bottom: 1.1rem; }
+            .hero-dots button { width: 26px; }
+            .hero-dots button.on { width: 38px; }
+        }
+
         .hero-content {
             position: relative;
             z-index: 2;
@@ -1490,18 +1576,25 @@
 
     <!-- HERO -->
     <header class="hero" id="inicio">
-        <div class="hero-content">
-            <div class="hero-badge">
-                <span class="hero-badge-dot"></span>
-                <span data-text="hero_badge">Bienestar Rural 360</span>
-            </div>
-            <h1><span data-text="hero_title">ESENCIA RURAL</span> <span class="highlight" data-text="hero_title_alt">CALIDAD PREMIUM</span></h1>
-            <p class="hero-sub" data-text="hero_subtitle">Mates, accesorios rurales, cuchillería artesanal y artículos de cuero premium. Dos líneas que comparten calidad, identidad de campo y terminaciones excepcionales.</p>
-            <a href="#catalogo" class="hero-cta">
-                <span data-text="hero_cta">VER BENEFICIOS</span>
-                <span class="material-symbols-outlined">arrow_downward</span>
-            </a>
+        <div class="hero-slides" id="heroSlides">
+            <article class="hero-slide is-active">
+                <div class="hero-content">
+                    <div class="hero-badge">
+                        <span class="hero-badge-dot"></span>
+                        <span data-text="hero_badge">Bienestar Rural 360</span>
+                    </div>
+                    <h1><span data-text="hero_title">ESENCIA RURAL</span> <span class="highlight" data-text="hero_title_alt">CALIDAD PREMIUM</span></h1>
+                    <p class="hero-sub" data-text="hero_subtitle">Mates, accesorios rurales, cuchillería artesanal y artículos de cuero premium. Dos líneas que comparten calidad, identidad de campo y terminaciones excepcionales.</p>
+                    <a href="#catalogo" class="hero-cta">
+                        <span data-text="hero_cta">VER BENEFICIOS</span>
+                        <span class="material-symbols-outlined">arrow_downward</span>
+                    </a>
+                </div>
+            </article>
         </div>
+        <button class="hero-arrow prev" id="heroPrev" aria-label="Anterior" hidden><span class="material-symbols-outlined">chevron_left</span></button>
+        <button class="hero-arrow next" id="heroNext" aria-label="Siguiente" hidden><span class="material-symbols-outlined">chevron_right</span></button>
+        <div class="hero-dots" id="heroDots" role="tablist" aria-label="Banners" hidden></div>
     </header>
 
     <!-- MARQUEE -->
@@ -2184,6 +2277,83 @@
         // ===== SCROLL ANIMATIONS (elementos estáticos) =====
         document.querySelectorAll(".animate-on-scroll").forEach(el => observer.observe(el));
 
+        // ===== CARRUSEL DEL INICIO =====
+        // Los banners se editan desde el panel. Si no hay ninguno activo, queda
+        // el inicio de siempre y el carrusel no se muestra.
+        const heroBox = document.getElementById("heroSlides");
+        const heroDots = document.getElementById("heroDots");
+        let heroIndex = 0, heroTimer = null, heroCount = 1;
+
+        function heroGo(i) {
+            const slides = heroBox.querySelectorAll(".hero-slide");
+            const fondos = document.querySelectorAll(".hero-slide-bg");
+            if (!slides.length) return;
+            heroIndex = (i + slides.length) % slides.length;
+            slides.forEach((s, n) => s.classList.toggle("is-active", n === heroIndex));
+            fondos.forEach((f, n) => f.classList.toggle("is-active", n === heroIndex));
+            heroDots.querySelectorAll("button").forEach((d, n) => {
+                d.classList.toggle("on", n === heroIndex);
+                d.setAttribute("aria-selected", n === heroIndex);
+            });
+        }
+
+        function heroAuto(on) {
+            clearInterval(heroTimer);
+            const quieto = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (on && heroCount > 1 && !quieto) heroTimer = setInterval(() => heroGo(heroIndex + 1), 6500);
+        }
+
+        function renderHero(banners) {
+            if (!banners?.length) return;
+            heroCount = banners.length;
+            const hero = document.getElementById("inicio");
+            hero.querySelectorAll(".hero-slide-bg").forEach(el => el.remove());
+
+            heroBox.innerHTML = banners.map((b, i) => `
+                <article class="hero-slide ${i === 0 ? "is-active" : ""}" ${i === 0 ? "" : 'aria-hidden="true"'}>
+                    <div class="hero-content">
+                        ${b.kicker ? `<div class="hero-badge"><span class="hero-badge-dot"></span><span>${esc(b.kicker)}</span></div>` : ""}
+                        ${b.title || b.title_alt ? `<h1>${esc(b.title)}${b.title_alt ? ` <span class="highlight">${esc(b.title_alt)}</span>` : ""}</h1>` : ""}
+                        ${b.text ? `<p class="hero-sub">${esc(b.text)}</p>` : ""}
+                        ${b.cta_label ? `<a href="${esc(b.cta_link || "#catalogo")}" class="hero-cta">${esc(b.cta_label)}<span class="material-symbols-outlined">arrow_downward</span></a>` : ""}
+                    </div>
+                </article>`).join("");
+
+            // Los fondos propios van detrás del contenido, no dentro del slide.
+            banners.forEach((b, i) => {
+                if (!b.image_url) return;
+                const bg = document.createElement("div");
+                bg.className = "hero-slide-bg" + (i === 0 ? " is-active" : "");
+                bg.style.backgroundImage = `url("${String(b.image_url).replace(/"/g, "%22")}")`;
+                bg.dataset.i = i;
+                hero.insertBefore(bg, heroBox);
+            });
+
+            const varios = banners.length > 1;
+            heroDots.hidden = !varios;
+            document.getElementById("heroPrev").hidden = !varios;
+            document.getElementById("heroNext").hidden = !varios;
+            heroDots.innerHTML = varios ? banners.map((b, i) =>
+                `<button role="tab" aria-selected="${i === 0}" aria-label="Banner ${i + 1}" data-dot="${i}"></button>`).join("") : "";
+            heroDots.querySelectorAll("[data-dot]").forEach(d => d.onclick = () => { heroGo(Number(d.dataset.dot)); heroAuto(true); });
+            heroGo(0);
+            heroAuto(true);
+        }
+
+        document.getElementById("heroPrev").onclick = () => { heroGo(heroIndex - 1); heroAuto(true); };
+        document.getElementById("heroNext").onclick = () => { heroGo(heroIndex + 1); heroAuto(true); };
+        document.getElementById("inicio").addEventListener("mouseenter", () => heroAuto(false));
+        document.getElementById("inicio").addEventListener("mouseleave", () => heroAuto(true));
+        // Deslizar con el dedo en el celular.
+        let touchX = null;
+        document.getElementById("inicio").addEventListener("touchstart", e => { touchX = e.touches[0].clientX; }, { passive: true });
+        document.getElementById("inicio").addEventListener("touchend", e => {
+            if (touchX === null) return;
+            const dx = e.changedTouches[0].clientX - touchX;
+            if (Math.abs(dx) > 45) { heroGo(heroIndex + (dx < 0 ? 1 : -1)); heroAuto(true); }
+            touchX = null;
+        }, { passive: true });
+
         // ===== VUELTA DESDE MERCADO PAGO =====
         (function showPaymentResult() {
             const params = new URLSearchParams(location.search);
@@ -2219,12 +2389,14 @@
                 const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
                     auth: { persistSession: false, autoRefreshToken: false, storageKey: "br369-store-public" }
                 });
-                const [{ data, error }, categoryResult, textResult] = await Promise.all([
+                const [{ data, error }, categoryResult, textResult, bannerResult] = await Promise.all([
                     remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at"),
                     remoteDb.from("categories").select("name,slug").eq("active", true).order("sort_order"),
-                    remoteDb.from("site_texts").select("key,value")
+                    remoteDb.from("site_texts").select("key,value"),
+                    remoteDb.from("hero_banners").select("*").eq("active", true).order("slot")
                 ]);
                 if (!textResult.error) applySiteTexts(textResult.data);
+                if (!bannerResult.error) renderHero(bannerResult.data);
                 if (error) throw error;
                 if (!data?.length) return;
                 storeDb = remoteDb;
