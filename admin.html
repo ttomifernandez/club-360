@@ -248,6 +248,7 @@ let profilesList=[];
 let orderItems=new Map();
 let currentRole=null;
 let currentUserId=null;
+let isSuperadmin=false;
 const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor"};
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
@@ -432,7 +433,8 @@ document.getElementById("orderClear").onclick=()=>{
 let tutorials=[];
 const youtubeId=url=>{const m=String(url||"").match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);return m?m[1]:""};
 function renderTutorials(){
- const isOwner=currentRole==="owner";
+ // Solo el superadministrador (regla en la base) carga o borra videos.
+ const isOwner=isSuperadmin;
  document.getElementById("newTutorial").hidden=!isOwner;
  const list=isOwner?tutorials:tutorials.filter(t=>t.active);
  document.getElementById("tutorialList").innerHTML=list.length
@@ -441,6 +443,9 @@ function renderTutorials(){
 }
 async function loadTutorials(){
  if(!remoteMode)return;
+ // La base decide quién administra los videos; acá solo adaptamos la pantalla.
+ const {data:superadmin}=await db.rpc("is_superadmin");
+ isSuperadmin=superadmin===true;
  const {data,error}=await db.from("tutorials").select("*").order("sort_order").order("created_at");
  tutorials=error?[]:(data||[]);
  renderTutorials();
@@ -851,7 +856,7 @@ function handleMercadoPagoReturn(){
  if(result==="ok")toast("Mercado Pago conectado ✅"+(params.get("cuenta")?" · "+params.get("cuenta"):""),5000);
  else toast("No se pudo conectar: "+(params.get("detalle")||"error desconocido"),6000);
 }
-function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
+function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;isSuperadmin=false;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
 document.getElementById("logoutBtn").onclick=async()=>{document.getElementById("logoutBtn").disabled=true;await db.auth.signOut();document.getElementById("logoutBtn").disabled=false;toast("Sesión cerrada")};
 document.getElementById("loginForm").onsubmit=async e=>{
  e.preventDefault();const out=document.getElementById("authError");out.textContent="";
