@@ -28,6 +28,21 @@
     .mp-qr{display:grid;gap:12px;justify-items:center;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}.mp-qr svg,.mp-qr img{width:210px;height:210px;display:block;background:#fff;border-radius:8px}.mp-qr small{color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
     .mp-steps{margin:0;padding-left:18px;color:var(--muted);line-height:1.7;max-width:640px}.mp-actions{display:flex;gap:9px;flex-wrap:wrap}
     .pay-grid{display:grid;gap:14px;grid-template-columns:minmax(220px,280px)}.pay-grid .field span{font-size:12px;font-weight:700}
+    .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+    @media(max-width:1100px){.dash-grid{grid-template-columns:1fr}}
+    .stat.action{text-align:left;font:inherit;cursor:pointer;transition:all .2s}
+    .stat.action:hover{border-color:var(--green2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(28,45,37,.09)}
+    .stat.alert strong{color:var(--gold)}.stat.good small{color:var(--green2)}
+    .delta{font-weight:700}.delta.up{color:var(--green2)}.delta.down{color:var(--danger)}
+    .dash-note{font-size:12px;color:var(--muted)}
+    .collapse-btn{border:0;background:rgba(255,255,255,.12);color:#cce0d8;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+    .collapse-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+    .shell.collapsed{grid-template-columns:74px 1fr}
+    .shell.collapsed .brand-copy,.shell.collapsed .nav span:not(.icon):not(.nav-badge),.shell.collapsed .menu-label,.shell.collapsed .sidebar-foot{display:none}
+    .shell.collapsed .sidebar{padding:22px 10px}.shell.collapsed .brand{padding:0 0 20px;justify-content:center}
+    .shell.collapsed .nav button{justify-content:center;padding:11px 0}
+    .shell.collapsed .nav button span.nav-badge{position:absolute;top:2px;right:6px;margin:0;padding:1px 5px}
+    .shell.collapsed .collapse-btn{position:absolute;top:26px;right:8px;transform:rotate(180deg)}
     .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line)}
     .tab{border:0;background:none;padding:11px 16px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
     .tab:hover{color:var(--ink)}.tab.active{color:var(--green);border-bottom-color:var(--green)}
@@ -70,7 +85,7 @@
 <body>
 <div class="shell">
   <aside class="sidebar">
-    <div class="brand"><span class="mark"><img src="images/logo-360.png" alt="Logo Bienestar Rural 360"></span><span class="brand-copy"><strong>Bienestar Rural</strong><small>Panel de gestión</small></span></div>
+    <div class="brand"><span class="mark"><img src="images/logo-360.png" alt="Logo Bienestar Rural 360"></span><span class="brand-copy"><strong>Bienestar Rural</strong><small>Panel de gestión</small></span><button class="collapse-btn" id="collapseBtn" title="Contraer menú" aria-label="Contraer menú">‹</button></div>
     <div class="menu-label">Principal</div>
     <nav class="nav">
       <button class="active" data-view="dashboard"><span class="icon">⌂</span><span>Resumen</span></button>
@@ -89,14 +104,27 @@
     <header class="topbar"><h1 id="pageTitle">Resumen</h1><div class="top-actions"><div class="user-chip" id="userChip" hidden><span class="avatar" id="userAvatar">T</span><span class="user-copy"><strong id="userName">Usuario</strong><small id="userRole">—</small></span></div><button class="btn" id="logoutBtn" hidden>Cerrar sesión</button><a class="btn" href="/" target="_blank">Ver tienda ↗</a></div></header>
     <div class="content">
       <section class="view active" id="dashboard">
-        <div class="intro"><div><h2>Buen día, Tomás</h2><p>Así está Bienestar Rural 360 hoy.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
+        <div class="intro"><div><h2 id="greeting">Hola</h2><p id="greetingSub">Así está la tienda hoy.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
         <div class="stats">
-          <div class="stat"><span>Productos activos</span><strong id="activeCount">0</strong><small>Catálogo publicado</small></div>
-          <div class="stat"><span>Valor de inventario</span><strong id="inventoryValue">$0</strong><small>Según precio de venta</small></div>
-          <div class="stat"><span>Stock total</span><strong id="stockCount">0</strong><small id="lowStock">Sin alertas</small></div>
-          <div class="stat"><span>Pedidos</span><strong id="orderCount">0</strong><small id="salesTotal">Sin ventas registradas</small></div>
+          <button class="stat action" data-go="orders"><span>Pedidos pendientes</span><strong id="statPending">0</strong><small id="statPendingHint">Todo al día</small></button>
+          <div class="stat"><span>Ventas del mes</span><strong id="statMonth">$0</strong><small id="statMonthDelta">—</small></div>
+          <div class="stat"><span>Ticket promedio</span><strong id="statAvg">$0</strong><small id="statAvgHint">Del mes</small></div>
+          <button class="stat action" data-go="products"><span>Reponer stock</span><strong id="statLow">0</strong><small id="statLowHint">Sin alertas</small></button>
         </div>
-        <div class="panel"><div class="panel-head"><h3>Catálogo reciente</h3><button class="btn" data-view-button="products">Administrar todos</button></div><div class="table-wrap"><table><thead><tr><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Estado</th></tr></thead><tbody id="recentRows"></tbody></table></div></div>
+        <div class="dash-grid">
+          <div class="panel">
+            <div class="panel-head"><h3>Últimos pedidos</h3><button class="btn" data-go="orders">Ver todos</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead><tbody id="dashOrders"></tbody></table></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Necesitan reposición</h3><button class="btn" data-go="products">Ver catálogo</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Producto</th><th>Stock</th><th>Valor</th></tr></thead><tbody id="dashStock"></tbody></table></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:18px">
+          <div class="panel-head"><h3>Más vendidos</h3><span class="dash-note" id="inventoryNote">—</span></div>
+          <div class="table-wrap"><table><thead><tr><th>Producto</th><th>Unidades</th><th>Facturado</th></tr></thead><tbody id="dashTop"></tbody></table></div>
+        </div>
       </section>
       <section class="view" id="products">
         <div class="intro"><div><h2>Productos</h2><p>Precios, stock, descripciones y visibilidad.</p></div><button class="btn primary" data-new>+ Nuevo producto</button></div>
@@ -393,13 +421,57 @@ async function loadRemoteAdminData(){
 }
 function productRow(p,actions=false){return `<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.id)}</small></span></div></td><td>${escapeHtml(p.catLabel)}</td><td><strong>${money(p.price)}</strong></td><td class="${p.stock<=3?"stock low":"stock"}">${p.stock} u.</td><td><span class="pill ${p.active?"":"off"}">${p.active?"Publicado":"Oculto"}</span></td>${actions?`<td><div class="row-actions"><button data-edit="${p.id}" title="Editar">✎</button><button data-toggle="${p.id}" title="${p.active?"Ocultar":"Publicar"}">${p.active?"◉":"○"}</button>${perms.remove?`<button data-delete="${p.id}" title="Eliminar">⌫</button>`:""}</div></td>`:""}</tr>`}
 function render(){
- const active=products.filter(p=>p.active);document.getElementById("activeCount").textContent=active.length;
- document.getElementById("inventoryValue").textContent=money(products.reduce((t,p)=>t+p.price*p.stock,0));
- document.getElementById("stockCount").textContent=products.reduce((t,p)=>t+Number(p.stock),0);
- const low=products.filter(p=>p.stock<=3).length;document.getElementById("lowStock").textContent=low?`${low} con stock bajo`:"Sin alertas";
- document.getElementById("recentRows").innerHTML=products.slice(0,5).map(p=>productRow(p)).join("");
+ renderDashboard();
  renderProducts();renderCategories();renderUsers();
 }
+// ===== RESUMEN =====
+const LOW_STOCK=3;
+function renderDashboard(){
+ const now=new Date(),hour=now.getHours();
+ const nombre=(document.getElementById("userName").textContent||"").split(" ")[0];
+ document.getElementById("greeting").textContent=(hour<13?"Buen día":hour<20?"Buenas tardes":"Buenas noches")+(currentRole&&nombre!=="Usuario"?", "+nombre:"");
+
+ const startThis=new Date(now.getFullYear(),now.getMonth(),1);
+ const startPrev=new Date(now.getFullYear(),now.getMonth()-1,1);
+ const valid=orders.filter(o=>o.status!=="cancelled");
+ const sum=list=>list.reduce((t,o)=>t+Number(o.total),0);
+ const thisMonth=valid.filter(o=>new Date(o.created_at)>=startThis);
+ const prevMonth=valid.filter(o=>{const d=new Date(o.created_at);return d>=startPrev&&d<startThis});
+ const totalThis=sum(thisMonth),totalPrev=sum(prevMonth);
+ document.getElementById("statMonth").textContent=money(totalThis);
+ const deltaBox=document.getElementById("statMonthDelta");
+ if(!totalPrev&&!totalThis)deltaBox.textContent="Sin ventas todavía";
+ else if(!totalPrev)deltaBox.textContent=`${thisMonth.length} ${thisMonth.length===1?"venta":"ventas"} este mes`;
+ else{const pct=Math.round((totalThis-totalPrev)/totalPrev*100);deltaBox.innerHTML=`<span class="delta ${pct>=0?"up":"down"}">${pct>=0?"▲":"▼"} ${Math.abs(pct)}%</span> vs. mes anterior`}
+ document.getElementById("statAvg").textContent=thisMonth.length?money(totalThis/thisMonth.length):"$0";
+ document.getElementById("statAvgHint").textContent=thisMonth.length?`${thisMonth.length} ${thisMonth.length===1?"pedido":"pedidos"} este mes`:"Del mes";
+
+ const pending=orders.filter(o=>o.status==="pending");
+ document.getElementById("statPending").textContent=pending.length;
+ document.getElementById("statPending").closest(".stat").classList.toggle("alert",pending.length>0);
+ document.getElementById("statPendingHint").textContent=pending.length?money(sum(pending))+" por confirmar":"Todo al día";
+
+ const low=products.filter(p=>Number(p.stock)<=LOW_STOCK);
+ const out=low.filter(p=>Number(p.stock)===0);
+ document.getElementById("statLow").textContent=low.length;
+ document.getElementById("statLow").closest(".stat").classList.toggle("alert",low.length>0);
+ document.getElementById("statLowHint").textContent=low.length?(out.length?`${out.length} sin stock`:"Con stock bajo"):"Sin alertas";
+ document.getElementById("inventoryNote").textContent=`${products.filter(p=>p.active).length} productos publicados · ${money(products.reduce((t,p)=>t+p.price*p.stock,0))} en inventario`;
+
+ document.getElementById("dashOrders").innerHTML=orders.length?orders.slice(0,5).map(o=>`<tr><td><strong>#${o.order_number}</strong><br><small style="color:var(--muted)">${shortDate(o.created_at)}</small></td><td>${escapeHtml(o.customer_name)}</td><td><strong>${money(o.total)}</strong></td><td><span class="badge ${o.status}">${ORDER_LABELS[o.status]||o.status}</span></td></tr>`).join(""):`<tr><td colspan="4" class="empty">Todavía no hay pedidos.</td></tr>`;
+
+ document.getElementById("dashStock").innerHTML=low.length?[...low].sort((a,b)=>a.stock-b.stock).slice(0,5).map(p=>`<tr><td><div class="product-cell"><img class="thumb" src="${escapeHtml(p.img)}" alt=""><span><strong>${escapeHtml(p.title)}</strong><small>${escapeHtml(p.catLabel)}</small></span></div></td><td class="${Number(p.stock)===0?"stock low":"stock"}">${Number(p.stock)===0?"Agotado":p.stock+" u."}</td><td>${money(p.price)}</td></tr>`).join(""):`<tr><td colspan="3" class="empty">Todo el catálogo con stock suficiente.</td></tr>`;
+
+ const sold=new Map();
+ valid.forEach(o=>(orderItems.get(o.id)||[]).forEach(i=>{
+   const acc=sold.get(i.product_name)||{units:0,total:0};
+   acc.units+=Number(i.quantity);acc.total+=Number(i.unit_price)*Number(i.quantity);
+   sold.set(i.product_name,acc);
+ }));
+ const top=[...sold.entries()].sort((a,b)=>b[1].units-a[1].units).slice(0,5);
+ document.getElementById("dashTop").innerHTML=top.length?top.map(([name,d])=>`<tr><td><strong>${escapeHtml(name)}</strong></td><td>${d.units}</td><td>${money(d.total)}</td></tr>`).join(""):`<tr><td colspan="3" class="empty">Cuando entren ventas vas a ver acá qué se vende más.</td></tr>`;
+}
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>showView(b.dataset.go));
 function renderProducts(){
  const q=document.getElementById("productSearch").value.toLowerCase();
  const list=products.filter(p=>(p.title+" "+p.catLabel).toLowerCase().includes(q));
@@ -474,6 +546,7 @@ function renderOrders(){
  knownMaxOrder=orders.reduce((max,o)=>Math.max(max,Number(o.order_number)||0),0);
  document.getElementById("orderCount").textContent=orders.length;document.getElementById("salesTotal").textContent=orders.length?(pending?`${pending} pendiente${pending>1?"s":""} · `:"")+money(orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+Number(o.total),0))+" acumulado":"Sin ventas registradas";
  document.getElementById("ordersNotice").classList.toggle("show",!orders.length);
+ renderDashboard();
  const list=filteredOrders();
  const listTotal=list.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+Number(o.total),0);
  const filtrando=list.length!==orders.length;
@@ -880,7 +953,15 @@ async function refreshOrders(){
 function startOrderWatch(){if(!ordersTimer)ordersTimer=setInterval(refreshOrders,45000)}
 function stopOrderWatch(){clearInterval(ordersTimer);ordersTimer=null}
 document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
-document.querySelector("[data-view-button]").onclick=()=>showView("products");
+const shell=document.querySelector(".shell");
+const setCollapsed=on=>{
+ shell.classList.toggle("collapsed",on);
+ localStorage.setItem("br360-menu",on?"1":"0");
+ const button=document.getElementById("collapseBtn");
+ button.title=on?"Expandir menú":"Contraer menú";button.setAttribute("aria-label",button.title);
+};
+setCollapsed(localStorage.getItem("br360-menu")==="1");
+document.getElementById("collapseBtn").onclick=()=>setCollapsed(!shell.classList.contains("collapsed"));
 document.querySelectorAll("[data-new]").forEach(b=>b.onclick=()=>openModal());
 document.getElementById("productSearch").oninput=renderProducts;
 document.getElementById("category").oninput=e=>{if(!document.getElementById("editingId").value)document.getElementById("cat").value=slugify(e.target.value)};
