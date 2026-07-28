@@ -63,15 +63,17 @@ export default async function handler(request, response) {
     // Un pedido ya cancelado no se reabre desde un aviso.
     if (order.status === "cancelled" && newStatus === "paid") return ack(response);
 
+    // Vía la función, no por edición directa: es la que sabe devolver el
+    // stock cuando un pago se reembolsa o se desconoce.
+    await fetch(`${cfg.supabaseUrl}/rest/v1/rpc/set_order_status`, {
+      method: "POST",
+      headers: { apikey: cfg.serviceKey, authorization: `Bearer ${cfg.serviceKey}`, "content-type": "application/json" },
+      body: JSON.stringify({ p_order_id: orderId, p_status: newStatus }),
+    });
     await rest(cfg, `orders?id=eq.${encodeURIComponent(orderId)}`, {
       method: "PATCH",
       headers: { prefer: "return=minimal" },
-      body: JSON.stringify({
-        status: newStatus,
-        payment_provider: "mercadopago",
-        payment_reference: String(payment.id),
-        updated_at: new Date().toISOString(),
-      }),
+      body: JSON.stringify({ payment_provider: "mercadopago", payment_reference: String(payment.id) }),
     });
     return ack(response);
   } catch (error) {

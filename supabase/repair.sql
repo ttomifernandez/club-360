@@ -90,12 +90,14 @@ drop trigger if exists orders_audit on public.orders;
 create trigger orders_audit after insert or update or delete on public.orders
 for each row execute function public.write_audit_log();
 
--- 5) Perfil de administrador: da rol "owner" a los usuarios ya creados en
---    Authentication (correr solo cuando todos los usuarios existentes deban
---    ser administradores).
+-- 5) Perfil de administrador. OJO: esto NO debe promover a todos los usuarios.
+--    La versión original hacía owner a todo auth.users en cada corrida, lo que
+--    convertía a cualquiera que se registrara en administrador de la tienda.
+--    Ahora solo alcanza al email del propietario.
 insert into public.profiles (id, full_name, role, active)
 select id, coalesce(raw_user_meta_data->>'full_name', email, 'Owner'), 'owner', true
 from auth.users
+where lower(email) = 'ttomifernandez@gmail.com'
 on conflict (id) do update set role = 'owner', active = true;
 
 -- 6) Verificación final

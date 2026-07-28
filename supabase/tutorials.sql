@@ -19,10 +19,9 @@ drop policy if exists "Staff reads tutorials" on public.tutorials;
 create policy "Staff reads tutorials" on public.tutorials for select
   using (public.current_role() is not null);
 
-drop policy if exists "Owner manages tutorials" on public.tutorials;
-create policy "Owner manages tutorials" on public.tutorials for all
-  using (public.current_role() = 'owner')
-  with check (public.current_role() = 'owner');
+-- La gestión de los videos la define tutorials-lock.sql (solo el
+-- superadministrador). No se crea acá una policy para "owner": si este archivo
+-- se volviera a ejecutar, devolvería el control a cualquier propietario.
 
 drop trigger if exists tutorials_updated_at on public.tutorials;
 create trigger tutorials_updated_at before update on public.tutorials
