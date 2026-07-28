@@ -1397,7 +1397,7 @@
             <div class="nav-links">
                 <a href="#inicio">Inicio</a>
                 <a href="#catalogo">Catálogo</a>
-                <a href="#club" class="nav-cta">Solicitar Info</a>
+                <a href="#club" class="nav-cta" data-text="nav_cta">Solicitar Info</a>
             </div>
             <div class="nav-right">
                 <button class="nav-cart" id="cartBtn" aria-label="Abrir carrito">
@@ -1421,15 +1421,12 @@
         <div class="hero-content">
             <div class="hero-badge">
                 <span class="hero-badge-dot"></span>
-                <span>Bienestar Rural 360</span>
+                <span data-text="hero_badge">Bienestar Rural 360</span>
             </div>
-            <h1>ESENCIA RURAL <span class="highlight">CALIDAD PREMIUM</span></h1>
-            <p class="hero-sub">
-                Mates, accesorios rurales, cuchillería artesanal y artículos de cuero premium. Dos líneas que comparten
-                <strong style="color:#fff">calidad, identidad de campo y terminaciones excepcionales.</strong>
-            </p>
+            <h1><span data-text="hero_title">ESENCIA RURAL</span> <span class="highlight" data-text="hero_title_alt">CALIDAD PREMIUM</span></h1>
+            <p class="hero-sub" data-text="hero_subtitle">Mates, accesorios rurales, cuchillería artesanal y artículos de cuero premium. Dos líneas que comparten calidad, identidad de campo y terminaciones excepcionales.</p>
             <a href="#catalogo" class="hero-cta">
-                VER BENEFICIOS
+                <span data-text="hero_cta">VER BENEFICIOS</span>
                 <span class="material-symbols-outlined">arrow_downward</span>
             </a>
         </div>
@@ -1457,9 +1454,8 @@
     <section id="catalogo" class="catalog">
         <div class="catalog-inner">
             <div class="section-header animate-on-scroll">
-                <h2>El mundo de Bienestar Rural</h2>
-                <p>Productos para disfrutar la vida rural y piezas de cuero premium hechas para durar. Agregá al carrito
-                    y finalizá tu pedido por WhatsApp.</p>
+                <h2 data-text="catalog_title">El mundo de Bienestar Rural</h2>
+                <p data-text="catalog_subtitle">Productos para disfrutar la vida rural y piezas de cuero premium hechas para durar. Agregá al carrito y finalizá tu pedido por WhatsApp.</p>
             </div>
 
             <!-- FILTROS DE CATEGORÍA -->
@@ -1480,11 +1476,10 @@
     <!-- CTA BANNER -->
     <section class="cta-banner" id="club">
         <div class="cta-banner-inner animate-on-scroll">
-            <h2>Viví el estilo <span>Bienestar Rural</span></h2>
-            <p>Accedé a lanzamientos, piezas seleccionadas y beneficios especiales en toda la colección de
-                Bienestar Rural 360.</p>
+            <h2><span data-text="cta_title">Viví el estilo</span> <span data-text="cta_title_alt">Bienestar Rural</span></h2>
+            <p data-text="cta_text">Accedé a lanzamientos, piezas seleccionadas y beneficios especiales en toda la colección de Bienestar Rural 360.</p>
             <a href="#" class="hero-cta" id="clubBtn">
-                QUIERO CONOCER MÁS
+                <span data-text="cta_button">QUIERO CONOCER MÁS</span>
                 <span class="material-symbols-outlined">arrow_forward</span>
             </a>
         </div>
@@ -1493,11 +1488,11 @@
     <!-- FOOTER -->
     <footer class="contact">
         <div class="footer-bar">
-            <p>© 2026 BIENESTAR RURAL 360.</p>
+            <p data-text="footer_text">© 2026 BIENESTAR RURAL 360.</p>
             <div class="footer-links">
                 <span class="footer-location">
                     <span class="material-symbols-outlined">location_on</span>
-                    Córdoba, Argentina
+                    <span data-text="footer_location">Córdoba, Argentina</span>
                 </span>
                 <a href="#inicio">Volver al Inicio</a>
             </div>
@@ -1519,7 +1514,7 @@
                 <span>Total estimado</span>
                 <strong id="cartTotal">$0</strong>
             </div>
-            <p class="cart-note">Confirmá tus datos y registrá el pedido. El pago y el envío se coordinan a continuación.</p>
+            <p class="cart-note" data-text="cart_note">Confirmá tus datos y registrá el pedido. El pago y el envío se coordinan a continuación.</p>
             <button class="cart-checkout" id="cartCheckout" disabled>
                 <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16 0C7.16344 0 0 7.16344 0 16C0 19.0832 0.87325 21.9631 2.3855 24.4091L0 32L7.82869 29.5446C10.2796 31.1147 13.0645 32 16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0ZM23.4974 21.6033C23.1873 22.4766 21.8415 23.2307 20.8402 23.4479C20.1479 23.595 19.2458 23.7042 16.1953 22.4419C12.3015 20.831 9.77125 16.8906 9.57725 16.6346C9.38944 16.3786 8.00031 14.5369 8.00031 12.6288C8.00031 10.7208 8.96919 9.79463 9.35625 9.39494C9.67306 9.06825 10.19 8.91031 10.6934 8.91031C10.8549 8.91031 11.0031 8.91681 11.1384 8.92325C11.5385 8.94263 11.7386 8.96856 12.0033 9.60106C12.3323 10.3951 13.1328 12.3444 13.2294 12.5442C13.326 12.7441 13.4227 13.0154 13.2874 13.2801C13.1585 13.5513 13.0425 13.6741 12.8485 13.9001C12.6545 14.126 12.4673 14.3005 12.2674 14.5458C12.0868 14.7588 11.8866 14.9848 12.1124 15.3721C12.3382 15.7594 13.1194 17.0315 14.2685 18.0579C15.7523 19.3813 16.9531 19.8009 17.4049 19.9881C17.7404 20.1302 18.1406 20.1043 18.3858 19.8396C18.6891 19.5106 19.0635 18.9684 19.4379 18.4455C19.7024 18.0776 20.0315 18.026 20.3736 18.1551C20.7221 18.2778 22.5815 19.1945 22.956 19.3817C23.3305 19.5689 23.5822 19.6593 23.6725 19.8143C23.7629 19.9693 23.7629 20.7303 23.4974 21.6033Z" />
@@ -1566,6 +1561,16 @@
         let storeDb = null;
         let CATEGORIES = [];
         let PAYMENTS_ON = false;
+        const TEXTS = {};
+
+        // Los textos de la home se editan desde el panel. Se aplican como
+        // texto plano (nunca como HTML), así no hay forma de inyectar nada.
+        function applySiteTexts(rows) {
+            (rows || []).forEach(row => {
+                TEXTS[row.key] = row.value;
+                document.querySelectorAll(`[data-text="${row.key}"]`).forEach(el => { el.textContent = row.value; });
+            });
+        }
 
         let PRODUCTS = [
             {
@@ -2041,7 +2046,7 @@
         // ===== BOTÓN "QUIERO CONOCER MÁS" =====
         document.getElementById("clubBtn").addEventListener("click", e => {
             e.preventDefault();
-            const msg = "¡Hola! Quiero conocer más sobre Bienestar Rural 360 y sus beneficios.";
+            const msg = TEXTS.wa_info_message || "¡Hola! Quiero conocer más sobre Bienestar Rural 360 y sus beneficios.";
             window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
         });
 
@@ -2124,10 +2129,12 @@
                 const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
                     auth: { persistSession: false, autoRefreshToken: false, storageKey: "br369-store-public" }
                 });
-                const [{ data, error }, categoryResult] = await Promise.all([
+                const [{ data, error }, categoryResult, textResult] = await Promise.all([
                     remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at"),
-                    remoteDb.from("categories").select("name,slug").eq("active", true).order("sort_order")
+                    remoteDb.from("categories").select("name,slug").eq("active", true).order("sort_order"),
+                    remoteDb.from("site_texts").select("key,value")
                 ]);
+                if (!textResult.error) applySiteTexts(textResult.data);
                 if (error) throw error;
                 if (!data?.length) return;
                 storeDb = remoteDb;

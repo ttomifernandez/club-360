@@ -28,6 +28,20 @@
     .mp-qr{display:grid;gap:12px;justify-items:center;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}.mp-qr svg,.mp-qr img{width:210px;height:210px;display:block;background:#fff;border-radius:8px}.mp-qr small{color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
     .mp-steps{margin:0;padding-left:18px;color:var(--muted);line-height:1.7;max-width:640px}.mp-actions{display:flex;gap:9px;flex-wrap:wrap}
     .pay-grid{display:grid;gap:14px;grid-template-columns:minmax(220px,280px)}.pay-grid .field span{font-size:12px;font-weight:700}
+    .tabs{display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--line)}
+    .tab{border:0;background:none;padding:11px 16px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+    .tab:hover{color:var(--ink)}.tab.active{color:var(--green);border-bottom-color:var(--green)}
+    .tab-panel{display:none}.tab-panel.active{display:block}
+    .text-row{display:grid;gap:6px;width:100%;max-width:760px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+    .text-row:last-child{border-bottom:0;padding-bottom:0}
+    .text-row .head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .text-row label{font-size:12px;font-weight:700}
+    .text-row .restore{border:0;background:none;color:var(--green2);font-size:12px;font-weight:700;padding:2px 6px;border-radius:6px}
+    .text-row .restore:hover{background:var(--soft)}.text-row .restore[hidden]{display:none}
+    .text-row input,.text-row textarea{border:1px solid var(--line);padding:10px 12px;border-radius:9px;outline:none;width:100%;font:inherit}
+    .text-row textarea{min-height:74px;resize:vertical}
+    .text-row input:focus,.text-row textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px var(--soft)}
+    .text-row.changed input,.text-row.changed textarea{border-color:var(--gold);background:#fffdf7}
     .gallery-editor{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:4px}.gallery-editor:empty{display:none}
     .gthumb{position:relative;width:86px;height:86px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}.gthumb img{width:100%;height:100%;object-fit:cover;display:block}
     .gthumb .cover{position:absolute;left:0;right:0;bottom:0;background:rgba(23,79,61,.9);color:#fff;font-size:9px;font-weight:800;text-align:center;padding:2px;letter-spacing:.06em}
@@ -106,7 +120,9 @@
         <div class="panel"><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Acceso</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div></div>
       </section>
       <section class="view" id="settings">
-        <div class="intro"><div><h2>Configuración</h2><p>Cobros y conexiones de la tienda.</p></div></div>
+        <div class="intro"><div><h2>Configuración</h2><p>Cobros, conexiones y textos de la tienda.</p></div></div>
+        <div class="tabs"><button class="tab active" data-tab="pay">Método de pago</button><button class="tab" data-tab="texts">Textos de la home</button></div>
+        <div class="tab-panel active" id="tabPay">
         <div class="panel">
           <div class="panel-head"><h3>Mercado Pago</h3><span class="pill off" id="mpBadge">Sin conectar</span></div>
           <div class="mp-body" id="mpBody"><p class="mp-loading">Cargando…</p></div>
@@ -124,6 +140,13 @@
             <label class="check"><input type="checkbox" id="setBinary"> Solo pagos aprobados al instante</label>
             <span class="field-hint" style="max-width:640px">Las <strong>cuotas sin interés</strong> no se configuran acá: dependen de la cuenta de Mercado Pago del negocio (Tu negocio → Cuotas sin interés), porque el costo lo absorbe el vendedor.</span>
             <div class="mp-actions"><button class="btn primary" id="savePayOptions">Guardar opciones</button></div>
+          </div>
+        </div>
+        </div>
+        <div class="tab-panel" id="tabTexts">
+          <div class="panel">
+            <div class="panel-head"><h3>Textos de la home</h3><div class="tools"><button class="btn" id="restoreAllTexts">Restaurar todos</button><button class="btn primary" id="saveTexts">Guardar cambios</button></div></div>
+            <div class="mp-body" id="textsBody"><p class="mp-loading">Cargando…</p></div>
           </div>
         </div>
       </section>
@@ -620,6 +643,75 @@ document.getElementById("userForm").onsubmit=async e=>{
  if(error)return toast("No se pudo guardar: "+error.message,4000);
  document.getElementById("userModal").close();await loadRemoteAdminData();toast("Usuario actualizado");
 };
+// ===== TEXTOS DE LA HOME =====
+let siteTexts=[];
+document.querySelectorAll(".tab").forEach(tab=>tab.onclick=()=>{
+ document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===tab));
+ document.querySelectorAll(".tab-panel").forEach(p=>p.classList.toggle("active",p.id===(tab.dataset.tab==="pay"?"tabPay":"tabTexts")));
+ if(tab.dataset.tab==="texts")renderSiteTexts();else stopMpPoll();
+});
+async function loadSiteTexts(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("site_texts").select("*").order("sort_order");
+ siteTexts=error?[]:(data||[]);
+}
+function renderSiteTexts(){
+ const body=document.getElementById("textsBody");
+ const canEdit=currentRole==="owner";
+ document.getElementById("saveTexts").hidden=!canEdit;
+ document.getElementById("restoreAllTexts").hidden=!canEdit;
+ if(!siteTexts.length){body.innerHTML=`<p>Todavía no están cargados los textos. Corré el archivo site-texts.sql en Supabase.</p>`;return}
+ body.innerHTML=siteTexts.map(t=>`<div class="text-row" data-key="${escapeHtml(t.key)}">
+   <div class="head"><label for="txt-${escapeHtml(t.key)}">${escapeHtml(t.label)}</label><button type="button" class="restore" data-restore="${escapeHtml(t.key)}" hidden>Restaurar original</button></div>
+   ${t.multiline?`<textarea id="txt-${escapeHtml(t.key)}" ${canEdit?"":"disabled"}>${escapeHtml(t.value)}</textarea>`:`<input id="txt-${escapeHtml(t.key)}" ${canEdit?"":"disabled"} value="${escapeHtml(t.value)}">`}
+ </div>`).join("");
+ body.querySelectorAll("[data-key]").forEach(row=>{
+   const key=row.dataset.key, field=row.querySelector("input,textarea"), text=siteTexts.find(t=>t.key===key);
+   const sync=()=>{
+     row.classList.toggle("changed",field.value!==text.value);
+     row.querySelector(".restore").hidden=field.value===text.default_value;
+   };
+   field.oninput=sync;sync();
+ });
+ body.querySelectorAll("[data-restore]").forEach(b=>b.onclick=()=>{
+   const text=siteTexts.find(t=>t.key===b.dataset.restore);
+   const row=body.querySelector(`[data-key="${CSS.escape(b.dataset.restore)}"]`);
+   const field=row.querySelector("input,textarea");
+   field.value=text.default_value;field.dispatchEvent(new Event("input"));
+ });
+}
+document.getElementById("saveTexts").onclick=async()=>{
+ const button=document.getElementById("saveTexts");
+ const changed=[...document.querySelectorAll("#textsBody [data-key]")].map(row=>{
+   const key=row.dataset.key,value=row.querySelector("input,textarea").value;
+   const original=siteTexts.find(t=>t.key===key);
+   return original&&value!==original.value?{key,value}:null;
+ }).filter(Boolean);
+ if(!changed.length)return toast("No hay cambios para guardar");
+ button.disabled=true;button.textContent="Guardando…";
+ let failed=null;
+ for(const item of changed){
+   const {error}=await db.from("site_texts").update({value:item.value}).eq("key",item.key);
+   if(error){failed=error.message;break}
+ }
+ await loadSiteTexts();renderSiteTexts();
+ button.disabled=false;button.textContent="Guardar cambios";
+ toast(failed?"No se pudo guardar: "+failed:`${changed.length} ${changed.length===1?"texto actualizado":"textos actualizados"}`,failed?4000:1800);
+};
+document.getElementById("restoreAllTexts").onclick=async()=>{
+ if(!confirm("¿Volver todos los textos a la versión original? Se pierden los cambios que hayas hecho."))return;
+ const button=document.getElementById("restoreAllTexts");
+ button.disabled=true;button.textContent="Restaurando…";
+ let failed=null;
+ for(const t of siteTexts.filter(t=>t.value!==t.default_value)){
+   const {error}=await db.from("site_texts").update({value:t.default_value}).eq("key",t.key);
+   if(error){failed=error.message;break}
+ }
+ await loadSiteTexts();renderSiteTexts();
+ button.disabled=false;button.textContent="Restaurar todos";
+ toast(failed?"No se pudo restaurar: "+failed:"Textos restaurados",failed?4000:1800);
+};
+
 // ===== MERCADO PAGO =====
 let mpPoll=null;
 async function mpFetch(body){
@@ -735,7 +827,7 @@ function openModal(id){
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
 function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje",customers:"Clientes"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
- if(id==="settings"&&remoteMode)renderMercadoPago();else stopMpPoll();
+ if(id==="settings"&&remoteMode){renderMercadoPago();renderSiteTexts()}else stopMpPoll();
 }
 function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 let toastTimer=null;
@@ -911,7 +1003,7 @@ async function activateSession(session){
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
- await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers()]);
+ await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts()]);
  applyPermissions();
  startOrderWatch();
  handleMercadoPagoReturn();
