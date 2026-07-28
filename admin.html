@@ -955,7 +955,12 @@ function renderSiteTexts(){
  document.getElementById("saveTexts").hidden=!canEdit;
  document.getElementById("restoreAllTexts").hidden=!canEdit;
  if(!siteTexts.length){body.innerHTML=`<p>Todavía no están cargados los textos. Corré el archivo site-texts.sql en Supabase.</p>`;return}
- body.innerHTML=siteTexts.map(t=>`<div class="text-row" data-key="${escapeHtml(t.key)}">
+ // Con un banner activo, la portada sale de hero_banners: los textos hero_* no
+ // se ven en la tienda, así que acá se ocultan para no ofrecer campos muertos.
+ const bannerTapaHero=banners.some(b=>b.active);
+ const visibles=siteTexts.filter(t=>!(bannerTapaHero&&t.key.startsWith("hero_")));
+ const aviso=bannerTapaHero?`<p class="field-hint" style="margin-bottom:12px">La portada de arriba (etiqueta, título, frase y botón) se edita en la pestaña <strong>Banners del inicio</strong>.</p>`:"";
+ body.innerHTML=aviso+visibles.map(t=>`<div class="text-row" data-key="${escapeHtml(t.key)}">
    <div class="head"><label for="txt-${escapeHtml(t.key)}">${escapeHtml(t.label)}</label><button type="button" class="restore" data-restore="${escapeHtml(t.key)}" hidden>Restaurar original</button></div>
    ${t.multiline?`<textarea id="txt-${escapeHtml(t.key)}" ${canEdit?"":"disabled"}>${escapeHtml(t.value)}</textarea>`:`<input id="txt-${escapeHtml(t.key)}" ${canEdit?"":"disabled"} value="${escapeHtml(t.value)}">`}
  </div>`).join("");
