@@ -100,6 +100,14 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
+        /* Las secciones bajo el pliegue no se calculan hasta acercarse al viewport. */
+        .catalog,
+        .cta-banner,
+        footer.contact {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 900px;
+        }
+
         /* Hasta que llega la fuente de iconos, cada icono reserva 1em (su tamaño
            final) en vez de mostrar el nombre de la ligadura ("arrow_downward"). */
         html:not(.icons-ready) .material-symbols-outlined {
