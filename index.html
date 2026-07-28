@@ -1242,6 +1242,17 @@
         .checkout-actions button { border: 1px solid var(--slate-200); border-radius: .8rem; padding: .8rem 1rem; font-weight: 800; background: white; }
         .checkout-actions .confirm { background: var(--emerald-700); color: white; border-color: var(--emerald-700); }
         .order-success { padding: 2rem; text-align: center; }
+        .cart-checkout.pay-btn { background: #009ee3; box-shadow: 0 10px 25px rgba(0,158,227,.25); }
+        .cart-checkout.pay-btn:hover { background: #0087c4; }
+        .cart-checkout.ghost { background: white; color: var(--slate-600); border: 1px solid var(--slate-200); box-shadow: none; }
+        .cart-checkout.ghost:hover { background: var(--slate-50); color: var(--slate-900); }
+        .pay-msg { margin-top: .9rem; font-size: .85rem; color: #b33b3b; min-height: 18px; }
+        .pay-banner { position: fixed; left: 50%; transform: translateX(-50%); top: 92px; z-index: 3000; max-width: min(560px, calc(100% - 24px)); background: white; border-radius: 1rem; box-shadow: 0 20px 50px rgba(0,0,0,.16); padding: 1rem 1.25rem; display: flex; gap: .75rem; align-items: flex-start; border-left: 5px solid var(--emerald-500); }
+        .pay-banner.warn { border-left-color: var(--amber-500); }
+        .pay-banner.bad { border-left-color: #dc2626; }
+        .pay-banner strong { display: block; font-family: var(--font-display); margin-bottom: .2rem; }
+        .pay-banner p { font-size: .9rem; color: var(--slate-600); line-height: 1.5; }
+        .pay-banner button { background: none; border: 0; cursor: pointer; color: var(--slate-400); margin-left: auto; }
         .order-success h3 { font-family: var(--font-display); font-size: 1.6rem; margin-bottom: .7rem; }
         @media (max-width: 560px) {
             .checkout-modal { width: calc(100% - 20px); max-height: calc(100dvh - 20px); border-radius: 1.1rem; }
@@ -1488,6 +1499,7 @@
         const WA_NUMBER = "5493515929043";
         let storeDb = null;
         let CATEGORIES = [];
+        let PAYMENTS_ON = false;
 
         let PRODUCTS = [
             {
@@ -1841,8 +1853,24 @@
             const snapshot=cartSnapshot();
             if(order?.total!=null)snapshot.total=Number(order.total);
             const discount=Number(order?.discount||0);
-            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp.</p>${discount>0?`<p><strong>Descuento aplicado: −${fmt(discount)}</strong></p>`:""}<p><strong>Total: ${fmt(snapshot.total)}</strong></p><button class="cart-checkout" id="continueWhatsapp" style="margin-top:1.2rem">Continuar por WhatsApp</button></div>`;
-            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber,snapshot);cart.clear();saveCart();renderCart();
+            const orderId=order?.order_id;
+            document.getElementById("checkoutContent").innerHTML=`<div class="order-success"><span class="material-symbols-outlined" style="font-size:52px;color:var(--emerald-600)">check_circle</span><h3>Pedido #${orderNumber} registrado</h3><p>${PAYMENTS_ON&&orderId?"Ya podés pagarlo online, o coordinar el pago por WhatsApp.":"Guardamos tu compra correctamente. Ahora coordinamos pago y entrega por WhatsApp."}</p>${discount>0?`<p><strong>Descuento aplicado: −${fmt(discount)}</strong></p>`:""}<p><strong>Total: ${fmt(snapshot.total)}</strong></p>${PAYMENTS_ON&&orderId?`<button class="cart-checkout pay-btn" id="payOnline" style="margin-top:1.2rem"><span class="material-symbols-outlined">credit_card</span> Pagar con Mercado Pago</button>`:""}<button class="cart-checkout${PAYMENTS_ON&&orderId?" ghost":""}" id="continueWhatsapp" style="margin-top:.7rem">${PAYMENTS_ON&&orderId?"Coordinar por WhatsApp":"Continuar por WhatsApp"}</button><p class="pay-msg" id="payMessage"></p></div>`;
+            document.getElementById("continueWhatsapp").onclick=()=>whatsappOrder(orderNumber,snapshot);
+            const payButton=document.getElementById("payOnline");
+            if(payButton)payButton.onclick=async()=>{
+                const message=document.getElementById("payMessage");message.textContent="";
+                payButton.disabled=true;payButton.textContent="Abriendo el pago…";
+                try{
+                    const res=await fetch("/api/mp-pay",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({orderId})});
+                    const out=await res.json().catch(()=>({}));
+                    if(!res.ok||!out.url)throw new Error(out.error||"No pudimos abrir el pago.");
+                    window.location.href=out.url;
+                }catch(error){
+                    message.textContent=error.message+" Podés coordinar por WhatsApp.";
+                    payButton.disabled=false;payButton.innerHTML='<span class="material-symbols-outlined">credit_card</span> Pagar con Mercado Pago';
+                }
+            };
+            cart.clear();saveCart();renderCart();
         };
 
         // ===== BOTÓN "QUIERO CONOCER MÁS" =====
@@ -1896,6 +1924,26 @@
         // ===== SCROLL ANIMATIONS (elementos estáticos) =====
         document.querySelectorAll(".animate-on-scroll").forEach(el => observer.observe(el));
 
+        // ===== VUELTA DESDE MERCADO PAGO =====
+        (function showPaymentResult() {
+            const params = new URLSearchParams(location.search);
+            const result = params.get("pago");
+            if (!result) return;
+            const order = params.get("pedido");
+            const texts = {
+                ok: ["¡Pago recibido!", `Gracias por tu compra${order ? ` (pedido #${order})` : ""}. Te escribimos por WhatsApp para coordinar la entrega.`, ""],
+                pendiente: ["Pago en proceso", `Mercado Pago todavía está confirmando el pago${order ? ` del pedido #${order}` : ""}. Cuando se acredite, seguimos con la entrega.`, "warn"],
+                error: ["No se pudo completar el pago", "No te preocupes: el pedido quedó registrado. Escribinos por WhatsApp y lo resolvemos.", "bad"]
+            };
+            const [title, body, cls] = texts[result] || texts.error;
+            const banner = document.createElement("div");
+            banner.className = "pay-banner " + cls;
+            banner.innerHTML = `<span class="material-symbols-outlined" style="color:var(--emerald-600)">${result === "ok" ? "check_circle" : result === "pendiente" ? "schedule" : "error"}</span><div><strong>${title}</strong><p>${body}</p></div><button aria-label="Cerrar"><span class="material-symbols-outlined">close</span></button>`;
+            document.body.appendChild(banner);
+            banner.querySelector("button").onclick = () => banner.remove();
+            history.replaceState(null, "", location.pathname);
+        })();
+
         // ===== INIT =====
         renderFilters();
         loadCart();
@@ -1904,6 +1952,7 @@
             try {
                 const config = await fetch("/api/config", { cache: "no-store" }).then(r => r.json());
                 if (!config.configured || !window.supabase) return;
+                PAYMENTS_ON = Boolean(config.payments);
                 // La tienda es siempre anónima: sin persistSession y con storageKey
                 // propio para no levantar la sesión del panel (mismo origen).
                 const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {

@@ -27,6 +27,7 @@
     .mp-body{padding:22px;display:grid;gap:16px;justify-items:start}.mp-body p{margin:0;line-height:1.6;color:var(--muted);max-width:640px}.mp-body strong{color:var(--ink)}.mp-loading{color:var(--muted)}
     .mp-qr{display:grid;gap:12px;justify-items:center;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}.mp-qr svg,.mp-qr img{width:210px;height:210px;display:block;background:#fff;border-radius:8px}.mp-qr small{color:var(--muted);text-align:center;max-width:260px;line-height:1.5}
     .mp-steps{margin:0;padding-left:18px;color:var(--muted);line-height:1.7;max-width:640px}.mp-actions{display:flex;gap:9px;flex-wrap:wrap}
+    .pay-grid{display:grid;gap:14px;grid-template-columns:minmax(220px,280px)}.pay-grid .field span{font-size:12px;font-weight:700}
     .toast{position:fixed;right:24px;bottom:24px;background:#173a2f;color:#fff;padding:13px 17px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(30px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
     .mobile-head{display:none}
     .auth-gate{position:fixed;inset:0;z-index:50;background:linear-gradient(145deg,#0d3025,#174f3d);display:none;place-items:center;padding:20px}.auth-gate.show{display:grid}.auth-card{width:min(420px,100%);background:#fff;border-radius:20px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.3)}.auth-card h2{font:800 25px Manrope;margin:14px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.connection{font-size:11px;color:var(--muted);margin-top:15px}
@@ -79,6 +80,21 @@
         <div class="panel">
           <div class="panel-head"><h3>Mercado Pago</h3><span class="pill off" id="mpBadge">Sin conectar</span></div>
           <div class="mp-body" id="mpBody"><p class="mp-loading">Cargando…</p></div>
+        </div>
+        <div class="panel" id="payOptionsPanel" hidden style="margin-top:18px">
+          <div class="panel-head"><h3>Opciones de cobro</h3></div>
+          <div class="mp-body">
+            <p>Qué le ofrece la tienda al cliente al momento de pagar.</p>
+            <div class="pay-grid">
+              <label class="field"><span>Máximo de cuotas</span><select id="setInstallments"><option value="1">1 pago</option><option value="3">Hasta 3 cuotas</option><option value="6">Hasta 6 cuotas</option><option value="9">Hasta 9 cuotas</option><option value="12">Hasta 12 cuotas</option><option value="24">Todas las disponibles</option></select></label>
+            </div>
+            <label class="check"><input type="checkbox" id="setCredit"> Aceptar tarjeta de crédito</label>
+            <label class="check"><input type="checkbox" id="setDebit"> Aceptar tarjeta de débito</label>
+            <label class="check"><input type="checkbox" id="setCash"> Aceptar efectivo (Rapipago, Pago Fácil)</label>
+            <label class="check"><input type="checkbox" id="setBinary"> Solo pagos aprobados al instante</label>
+            <span class="field-hint" style="max-width:640px">Las <strong>cuotas sin interés</strong> no se configuran acá: dependen de la cuenta de Mercado Pago del negocio (Tu negocio → Cuotas sin interés), porque el costo lo absorbe el vendedor.</span>
+            <div class="mp-actions"><button class="btn primary" id="savePayOptions">Guardar opciones</button></div>
+          </div>
         </div>
       </section>
     </div>
@@ -452,6 +468,28 @@ function loadQrLibrary(){
  });
 }
 function stopMpPoll(){clearInterval(mpPoll);mpPoll=null}
+function renderPayOptions(status){
+ const panel=document.getElementById("payOptionsPanel");
+ panel.hidden=!status.connected;
+ if(!status.connected)return;
+ const s=status.settings||{maxInstallments:6,acceptCash:false,acceptCredit:true,acceptDebit:true,binaryMode:true};
+ const select=document.getElementById("setInstallments");
+ select.value=[...select.options].some(o=>Number(o.value)===Number(s.maxInstallments))?String(s.maxInstallments):"6";
+ document.getElementById("setCash").checked=!!s.acceptCash;
+ document.getElementById("setCredit").checked=s.acceptCredit!==false;
+ document.getElementById("setDebit").checked=s.acceptDebit!==false;
+ document.getElementById("setBinary").checked=s.binaryMode!==false;
+ const save=document.getElementById("savePayOptions");
+ save.disabled=!status.canManage;
+ save.onclick=async()=>{
+   save.disabled=true;save.textContent="Guardando…";
+   try{
+     await mpFetch({action:"save-settings",maxInstallments:Number(select.value),acceptCash:document.getElementById("setCash").checked,acceptCredit:document.getElementById("setCredit").checked,acceptDebit:document.getElementById("setDebit").checked,binaryMode:document.getElementById("setBinary").checked});
+     toast("Opciones de cobro guardadas");
+   }catch(error){toast(error.message,4000)}
+   save.disabled=false;save.textContent="Guardar opciones";
+ };
+}
 async function renderMercadoPago(){
  const body=document.getElementById("mpBody"),badge=document.getElementById("mpBadge");
  let status;
@@ -460,6 +498,7 @@ async function renderMercadoPago(){
    stopMpPoll();
    const a=status.account||{};
    badge.textContent="Conectado";badge.className="pill";
+   renderPayOptions(status);
    body.innerHTML=`<p>Cobrás con la cuenta <strong>${escapeHtml(a.nickname||a.email||a.userId||"de Mercado Pago")}</strong>${a.liveMode===false?" · <strong>modo de prueba</strong>":""}.</p>
      <p>El acceso se renueva solo${a.daysLeft!=null?`; el actual vale ${a.daysLeft} días más`:""}. No hace falta que hagas nada más.</p>
      ${status.canManage?`<div class="mp-actions"><button class="btn danger" id="mpDisconnect">Desconectar cuenta</button></div>`:`<p>La conexión de cobros está bloqueada: solo el administrador de la tienda puede cambiarla.</p>`}`;
@@ -471,6 +510,7 @@ async function renderMercadoPago(){
    return;
  }
  badge.textContent="Sin conectar";badge.className="pill off";
+ renderPayOptions(status);
  if(!status.configured){
    body.innerHTML=`<p>Todavía falta crear la aplicación en Mercado Pago Developers y cargar sus claves en el servidor.</p>
      <p>Cuando exista la cuenta, hay que registrar esta dirección de retorno en la aplicación:<br><strong>${escapeHtml(status.redirectUri)}</strong></p>`;

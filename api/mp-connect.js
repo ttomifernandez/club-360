@@ -66,13 +66,24 @@ export default async function handler(request, response) {
   if (action === "status") {
     // Además del cron diario, aprovechamos esta visita para renovar si hace falta.
     await refreshMercadoPago().catch(() => {});
-    const res = await rest(cfg, "payment_credentials?provider=eq.mercadopago&select=nickname,email,mp_user_id,live_mode,expires_at,connected_at");
+    const [res, setRes] = await Promise.all([
+      rest(cfg, "payment_credentials?provider=eq.mercadopago&select=nickname,email,mp_user_id,live_mode,expires_at,connected_at"),
+      rest(cfg, "payment_settings?provider=eq.mercadopago&select=*"),
+    ]);
     const rows = res.ok ? await res.json() : [];
     const row = rows[0] || null;
+    const settings = (setRes.ok ? await setRes.json() : [])[0] || null;
     return response.status(200).json({
       configured: Boolean(cfg.clientId && process.env.MP_CLIENT_SECRET),
       canManage: auth.canManage,
       redirectUri,
+      settings: settings && {
+        maxInstallments: settings.max_installments,
+        acceptCash: settings.accept_cash,
+        acceptCredit: settings.accept_credit,
+        acceptDebit: settings.accept_debit,
+        binaryMode: settings.binary_mode,
+      },
       connected: Boolean(row),
       account: row && {
         nickname: row.nickname,
@@ -120,6 +131,26 @@ export default async function handler(request, response) {
       params.set("code_challenge_method", "S256");
     }
     return response.status(200).json({ url: `${MP_AUTH_URL}?${params}` });
+  }
+
+  if (action === "save-settings") {
+    const s = request.body || {};
+    const row = {
+      provider: "mercadopago",
+      max_installments: Math.min(24, Math.max(1, Number(s.maxInstallments) || 6)),
+      accept_cash: Boolean(s.acceptCash),
+      accept_credit: s.acceptCredit !== false,
+      accept_debit: s.acceptDebit !== false,
+      binary_mode: s.binaryMode !== false,
+      updated_at: new Date().toISOString(),
+    };
+    const res = await rest(cfg, "payment_settings", {
+      method: "POST",
+      headers: { prefer: "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify([row]),
+    });
+    if (!res.ok) return response.status(500).json({ error: "No se pudieron guardar las opciones." });
+    return response.status(200).json({ ok: true });
   }
 
   if (action === "disconnect") {
