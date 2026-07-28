@@ -264,7 +264,7 @@ function renderOrders(){
 function renderUsers(){
  const isOwner=currentRole==="owner";
  document.getElementById("newUserBtn").hidden=!isOwner;
- document.getElementById("userRows").innerHTML=profilesList.length?profilesList.map(u=>`<tr><td><strong>${escapeHtml(u.full_name)}</strong><br><small>${escapeHtml(u.id.slice(0,8))}…</small></td><td>${ROLE_LABELS[u.role]||escapeHtml(u.role)}</td><td>${shortDate(u.created_at)}</td><td><span class="pill ${u.active?"":"off"}">${u.active?"Habilitado":"Sin activar"}</span></td><td>${isOwner?`<div class="row-actions"><button data-user-edit="${u.id}" title="Editar">✎</button></div>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin usuarios visibles para tu rol.</td></tr>`;
+ document.getElementById("userRows").innerHTML=profilesList.length?profilesList.map(u=>`<tr><td><strong>${escapeHtml(u.full_name)}</strong><br><small>${escapeHtml(u.id.slice(0,8))}…</small></td><td>${ROLE_LABELS[u.role]||escapeHtml(u.role)}</td><td>${shortDate(u.created_at)}</td><td><span class="pill ${u.active?"":"off"}">${u.active?"Habilitado":"Sin activar"}</span></td><td>${isOwner?`<div class="row-actions"><button data-user-edit="${u.id}" title="Editar">✎</button>${u.id===currentUserId?"":`<button data-user-delete="${u.id}" title="Eliminar">⌫</button>`}</div>`:""}</td></tr>`).join(""):`<tr><td colspan="5" class="empty">Sin usuarios visibles para tu rol.</td></tr>`;
 }
 function openUserModal(id){
  const u=profilesList.find(x=>x.id===id);if(!u)return;
@@ -278,7 +278,21 @@ function openUserModal(id){
  document.getElementById("userSelfHint").textContent=self?"No podés cambiar tu propio rol ni deshabilitar tu propio acceso.":"";
  document.getElementById("userModal").showModal();
 }
-document.getElementById("userRows").onclick=e=>{const b=e.target.closest("[data-user-edit]");if(b)openUserModal(b.dataset.userEdit)};
+document.getElementById("userRows").onclick=async e=>{
+ const edit=e.target.closest("[data-user-edit]"),del=e.target.closest("[data-user-delete]");
+ if(edit)return openUserModal(edit.dataset.userEdit);
+ if(!del)return;
+ const user=profilesList.find(u=>u.id===del.dataset.userDelete);
+ if(!confirm(`¿Eliminar a ${user?.full_name||"este usuario"}? Pierde el acceso al panel de forma permanente.`))return;
+ try{
+   const {data:{session}}=await db.auth.getSession();
+   if(!session)throw new Error("Tu sesión venció: volvé a ingresar.");
+   const res=await fetch("/api/users",{method:"DELETE",headers:{"content-type":"application/json",authorization:"Bearer "+session.access_token},body:JSON.stringify({userId:del.dataset.userDelete})});
+   const out=await res.json().catch(()=>({}));
+   if(!res.ok)throw new Error(out.error||"No se pudo eliminar.");
+   await loadRemoteAdminData();toast("Usuario eliminado");
+ }catch(error){toast(error.message,4000)}
+};
 document.getElementById("newUserBtn").onclick=()=>{
  if(currentRole!=="owner")return toast("Solo el propietario puede crear usuarios.");
  document.getElementById("newUserForm").reset();document.getElementById("nuError").textContent="";document.getElementById("newUserModal").showModal();
@@ -290,7 +304,7 @@ document.getElementById("newUserForm").onsubmit=async e=>{
  try{
    const {data:{session}}=await db.auth.getSession();
    if(!session)throw new Error("Tu sesión venció: volvé a ingresar.");
-   const res=await fetch("/api/create-user",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+session.access_token},body:JSON.stringify({fullName:document.getElementById("nuName").value.trim(),email:document.getElementById("nuEmail").value.trim(),password:document.getElementById("nuPassword").value,role:document.getElementById("nuRole").value,active:document.getElementById("nuActive").checked})});
+   const res=await fetch("/api/users",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+session.access_token},body:JSON.stringify({fullName:document.getElementById("nuName").value.trim(),email:document.getElementById("nuEmail").value.trim(),password:document.getElementById("nuPassword").value,role:document.getElementById("nuRole").value,active:document.getElementById("nuActive").checked})});
    const out=await res.json().catch(()=>({}));
    if(!res.ok)throw new Error(out.error||"No se pudo crear el usuario.");
    document.getElementById("newUserModal").close();await loadRemoteAdminData();toast(out.warning||"Usuario creado",out.warning?5000:1800);

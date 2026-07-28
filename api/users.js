@@ -1,7 +1,7 @@
-// Alta de usuarios del panel. Corre en Vercel con el service role key,
+// Alta y baja de usuarios del panel. Corre en Vercel con el service role key,
 // que nunca llega al navegador. Solo un owner activo puede invocarlo.
 export default async function handler(request, response) {
-  if (request.method !== "POST") {
+  if (request.method !== "POST" && request.method !== "DELETE") {
     return response.status(405).json({ error: "Método no permitido." });
   }
   const supabaseUrl = (process.env.SUPABASE_URL || "").replace(/\/rest\/v1\/?$/, "");
@@ -29,6 +29,21 @@ export default async function handler(request, response) {
   const profiles = profRes.ok ? await profRes.json() : [];
   if (!profiles.length || profiles[0].role !== "owner" || !profiles[0].active) {
     return response.status(403).json({ error: "Solo el propietario puede crear usuarios." });
+  }
+
+  if (request.method === "DELETE") {
+    const { userId } = request.body || {};
+    if (!userId) return response.status(400).json({ error: "Falta el usuario a eliminar." });
+    if (userId === caller.id) return response.status(400).json({ error: "No podés eliminar tu propio usuario." });
+    const delRes = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { apikey: serviceKey, authorization: `Bearer ${serviceKey}` },
+    });
+    if (!delRes.ok) {
+      const body = await delRes.json().catch(() => ({}));
+      return response.status(400).json({ error: body?.msg || body?.message || "No se pudo eliminar el usuario." });
+    }
+    return response.status(200).json({ ok: true });
   }
 
   const { email, password, fullName, role, active } = request.body || {};
