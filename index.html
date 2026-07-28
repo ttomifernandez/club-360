@@ -2297,7 +2297,7 @@
             if (!slides.length) return;
             heroIndex = (i + slides.length) % slides.length;
             slides.forEach((s, n) => s.classList.toggle("is-active", n === heroIndex));
-            fondos.forEach((f, n) => f.classList.toggle("is-active", n === heroIndex));
+            fondos.forEach(f => f.classList.toggle("is-active", Number(f.dataset.i) === heroIndex));
             heroDots.querySelectorAll("button").forEach((d, n) => {
                 d.classList.toggle("on", n === heroIndex);
                 d.setAttribute("aria-selected", n === heroIndex);
