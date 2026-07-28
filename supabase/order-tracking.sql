@@ -57,6 +57,10 @@ revoke all on function public.order_tracking(text) from public;
 grant execute on function public.order_tracking(text) to anon, authenticated;
 
 -- place_order devuelve además el código, para poder armar el link del cliente.
+-- Como cambia lo que devuelve, hay que eliminarla antes de volver a crearla:
+-- PostgreSQL no permite cambiarle el tipo de retorno a una función existente.
+drop function if exists public.place_order(text,text,text,text,jsonb,text,text,text);
+
 create or replace function public.place_order(
   p_customer_name text,
   p_customer_email text,
