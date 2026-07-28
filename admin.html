@@ -462,7 +462,8 @@ async function renderMercadoPago(){
    badge.textContent="Conectado";badge.className="pill";
    body.innerHTML=`<p>Cobrás con la cuenta <strong>${escapeHtml(a.nickname||a.email||a.userId||"de Mercado Pago")}</strong>${a.liveMode===false?" · <strong>modo de prueba</strong>":""}.</p>
      <p>El acceso se renueva solo${a.daysLeft!=null?`; el actual vale ${a.daysLeft} días más`:""}. No hace falta que hagas nada más.</p>
-     <div class="mp-actions"><button class="btn danger" id="mpDisconnect">Desconectar cuenta</button></div>`;
+     ${status.canManage?`<div class="mp-actions"><button class="btn danger" id="mpDisconnect">Desconectar cuenta</button></div>`:`<p>La conexión de cobros está bloqueada: solo el administrador de la tienda puede cambiarla.</p>`}`;
+   if(!status.canManage)return;
    document.getElementById("mpDisconnect").onclick=async()=>{
      if(!confirm("¿Desconectar Mercado Pago? La tienda deja de poder cobrar online."))return;
      try{await mpFetch({action:"disconnect"});toast("Mercado Pago desconectado");renderMercadoPago()}catch(error){toast(error.message,4000)}
@@ -473,6 +474,10 @@ async function renderMercadoPago(){
  if(!status.configured){
    body.innerHTML=`<p>Todavía falta crear la aplicación en Mercado Pago Developers y cargar sus claves en el servidor.</p>
      <p>Cuando exista la cuenta, hay que registrar esta dirección de retorno en la aplicación:<br><strong>${escapeHtml(status.redirectUri)}</strong></p>`;
+   return;
+ }
+ if(!status.canManage){
+   body.innerHTML=`<p>Todavía no hay una cuenta de Mercado Pago conectada.</p><p>Solo el administrador de la tienda puede conectarla.</p>`;
    return;
  }
  body.innerHTML=`<p>Conectá la cuenta de Mercado Pago del negocio para poder cobrar online. Se hace una sola vez.</p>

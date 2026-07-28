@@ -17,6 +17,9 @@ function env() {
     clientId: process.env.MP_CLIENT_ID || "",
     redirectUri: process.env.MP_REDIRECT_URI || "",
     usePkce: (process.env.MP_PKCE || "").toLowerCase() === "true",
+    // Emails habilitados a conectar o desconectar el cobro. Vive solo en
+    // Vercel: nadie puede ampliarlo desde el panel. Vacío = cualquier owner.
+    admins: (process.env.MP_ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean),
   };
 }
 
@@ -45,7 +48,8 @@ async function requireOwner(request, cfg) {
   if (!profiles.length || profiles[0].role !== "owner" || !profiles[0].active) {
     return { error: "Solo el propietario puede configurar los cobros.", status: 403 };
   }
-  return { user };
+  const email = String(user.email || "").toLowerCase();
+  return { user, canManage: !cfg.admins.length || cfg.admins.includes(email) };
 }
 
 export default async function handler(request, response) {
@@ -67,6 +71,7 @@ export default async function handler(request, response) {
     const row = rows[0] || null;
     return response.status(200).json({
       configured: Boolean(cfg.clientId && process.env.MP_CLIENT_SECRET),
+      canManage: auth.canManage,
       redirectUri,
       connected: Boolean(row),
       account: row && {
@@ -79,6 +84,11 @@ export default async function handler(request, response) {
         daysLeft: row.expires_at ? Math.floor((new Date(row.expires_at) - Date.now()) / 86400000) : null,
       },
     });
+  }
+
+  // Conectar y desconectar quedan reservados a los emails habilitados.
+  if ((action === "start" || action === "disconnect") && !auth.canManage) {
+    return response.status(403).json({ error: "Tu usuario no está habilitado para cambiar la configuración de cobros." });
   }
 
   if (action === "start") {
