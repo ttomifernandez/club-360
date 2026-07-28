@@ -258,6 +258,8 @@
       <div class="field"><label>Precio de lista</label><input id="priceOld" required type="number" min="0"></div>
       <div class="field"><label>Precio de venta</label><input id="price" required type="number" min="0"></div>
       <div class="field"><label>Stock</label><input id="stock" required type="number" min="0" value="1"></div>
+      <div class="field"><label>Etiqueta de la foto</label><input id="tagText" placeholder="Ej. Edición limitada"><span class="field-hint">Cinta verde arriba de la foto. Vacía = usa el nombre de la categoría.</span></div>
+      <div class="field"><label>Cinta de descuento</label><input id="discountText" placeholder="Ej. -15% Socios"><span class="field-hint">Cinta naranja abajo de la foto. Vacía = no se muestra.</span></div>
       <div class="field full">
         <label>Fotos del producto <span class="field-hint" style="font-weight:400">(hasta 5 · la primera es la portada)</span></label>
         <div class="gallery-editor" id="galleryEditor"></div>
@@ -417,7 +419,7 @@ async function persist(message="Cambios guardados", changed=null, removedId=null
    }
  }catch(error){toast("No se pudo sincronizar: "+error.message)}
 }
-function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,gallery:Array.isArray(p.gallery)&&p.gallery.length?p.gallery.slice(0,5):(p.img?[p.img]:[]),video_url:p.videoUrl||null,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||p.catLabel,discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
+function toDbProduct(p,categoryId){const row={category_id:categoryId,name:p.title,slug:p.id,description:p.desc,image_url:p.img,gallery:Array.isArray(p.gallery)&&p.gallery.length?p.gallery.slice(0,5):(p.img?[p.img]:[]),video_url:p.videoUrl||null,price:p.price,list_price:p.priceOld,stock:p.stock,active:p.active,metadata:{tag:p.tag?.text||"",discount:p.discount||""}};if(p.dbId)row.id=p.dbId;return row}
 function fromDbProduct(p){return {id:p.slug,dbId:p.id,cat:p.categories?.slug||p.category_id,catLabel:p.categories?.name||p.category_id,tag:{text:p.metadata?.tag||p.categories?.name||"",cls:""},discount:p.metadata?.discount||"",title:p.name,desc:p.description,priceOld:Number(p.list_price||p.price),price:Number(p.price),stock:p.stock,img:p.image_url||"",gallery:Array.isArray(p.gallery)?p.gallery:[],videoUrl:p.video_url||"",active:p.active}}
 async function ensureCategory(p){
  const {data:existing,error:readError}=await db.from("categories").select("id").eq("slug",p.cat).maybeSingle();
@@ -1114,6 +1116,7 @@ function openModal(id){
  ["title","cat","priceOld","price","stock","img","desc"].forEach(k=>document.getElementById(k).value=p?.[k]??"");
  modalGallery=Array.isArray(p?.gallery)&&p.gallery.length?[...p.gallery]:(p?.img?[p.img]:[]);
  renderGalleryEditor();
+ document.getElementById("tagText").value=p?.tag?.text||"";document.getElementById("discountText").value=p?.discount||"";
  document.getElementById("videoUrl").value=p?.videoUrl||"";
  document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
@@ -1220,7 +1223,7 @@ document.getElementById("productForm").onsubmit=async e=>{
  if(!imageUrl){status.textContent="Subí al menos una foto.";return}
  submit.disabled=true;
  const existing=oldId?products.find(x=>x.id===oldId):null;
- const data={id,dbId:existing?.dbId,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:existing?.tag||{text:category,cls:""},discount:existing?.discount??"Beneficio especial",title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,gallery:[...modalGallery],videoUrl:document.getElementById("videoUrl").value.trim(),active:document.getElementById("active").checked};
+ const data={id,dbId:existing?.dbId,cat:document.getElementById("cat").value.trim(),catLabel:category,tag:{text:document.getElementById("tagText").value.trim(),cls:""},discount:document.getElementById("discountText").value.trim(),title,desc:document.getElementById("desc").value.trim(),priceOld:Number(document.getElementById("priceOld").value),price:Number(document.getElementById("price").value),stock:Number(document.getElementById("stock").value),img:imageUrl,gallery:[...modalGallery],videoUrl:document.getElementById("videoUrl").value.trim(),active:document.getElementById("active").checked};
  const i=products.findIndex(x=>x.id===oldId);if(i>=0)products[i]=data;else products.unshift(data);persist(oldId?"Producto actualizado":"Producto creado",data);document.getElementById("productModal").close();
  submit.disabled=false;
 };

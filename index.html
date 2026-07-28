@@ -2064,11 +2064,11 @@
               card.dataset.id = p.id;
               card.innerHTML = `
                 <div class="product-img">
-                    <span class="product-tag ${esc(p.tag.cls)}">${esc(p.tag.text)}</span>
+                    ${p.tag.text ? `<span class="product-tag ${esc(p.tag.cls)}">${esc(p.tag.text)}</span>` : ""}
                     <img src="${esc(p.img)}" alt="${esc(p.title)}" loading="lazy" width="800" height="600">
                     ${soldOut(p)
                         ? `<span class="product-tag out"><span class="material-symbols-outlined">block</span> Agotado</span>`
-                        : `<span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${esc(p.discount)}</span>`}
+                        : p.discount ? `<span class="product-tag discount"><span class="material-symbols-outlined">sell</span> ${esc(p.discount)}</span>` : ""}
                 </div>
                 <div class="product-body">
                     <div class="product-cat">${esc(p.catLabel)}</div>
