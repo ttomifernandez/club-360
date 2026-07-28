@@ -486,11 +486,15 @@ async function startMercadoPagoConnect(){
  try{
    const [{url}]=await Promise.all([mpFetch({action:"start"}),loadQrLibrary()]);
    const qr=qrcode(0,"M");qr.addData(url);qr.make();
-   body.innerHTML=`<p><strong>Escaneá el código con el celular</strong> donde tengas la sesión de Mercado Pago, e iniciá sesión con la cuenta del negocio.</p>
-     <div class="mp-qr">${qr.createSvgTag({cellSize:5,margin:2,scalable:true})}<small>Válido por 15 minutos. Esta pantalla se actualiza sola cuando termines.</small></div>
-     <ol class="mp-steps"><li>Escaneá el QR (o usá el botón de abajo si estás en la computadora).</li><li>Iniciá sesión en Mercado Pago con la cuenta del negocio.</li><li>Tocá "Autorizar". Listo, vuelve solo.</li></ol>
-     <div class="mp-actions"><a class="btn primary" href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir en esta computadora</a><button class="btn" id="mpCancel">Cancelar</button></div>`;
+   body.innerHTML=`<p><strong>Escaneá el código con el celular</strong> donde esté la sesión de Mercado Pago del negocio. Si el dueño no está con vos, copiá el link y mandáselo: puede autorizar desde su teléfono.</p>
+     <div class="mp-qr">${qr.createSvgTag({cellSize:5,margin:2,scalable:true})}<small>Vale por una hora. Esta pantalla se actualiza sola cuando termine.</small></div>
+     <ol class="mp-steps"><li>Escaneá el QR, abrilo acá, o mandale el link a quien tenga la cuenta.</li><li>Iniciar sesión en Mercado Pago con la cuenta del negocio.</li><li>Tocar "Autorizar". Listo.</li></ol>
+     <div class="mp-actions"><a class="btn primary" href="${escapeHtml(url)}" target="_blank" rel="noopener">Abrir en esta computadora</a><button class="btn" id="mpCopy">Copiar link</button><button class="btn" id="mpCancel">Cancelar</button></div>`;
    document.getElementById("mpCancel").onclick=()=>{stopMpPoll();renderMercadoPago()};
+   document.getElementById("mpCopy").onclick=async()=>{
+     try{await navigator.clipboard.writeText(url);toast("Link copiado · mandáselo a quien tenga la cuenta",4000)}
+     catch(error){toast("No se pudo copiar: usá el botón de abrir y copiá la dirección",4000)}
+   };
    // Mientras el QR está a la vista, chequeamos si ya autorizó.
    stopMpPoll();
    let ticks=0;

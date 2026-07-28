@@ -43,14 +43,15 @@ export default async function handler(request, response) {
     return back(response, { mp: "error", detalle: "Faltan variables de entorno del servidor." });
   }
 
-  // El nonce debe existir y no tener más de 15 minutos.
+  // El nonce debe existir y no tener más de una hora (da margen para que el
+  // dueño autorice desde su celular con el link que le mandaron).
   const stateRes = await rest(cfg, `payment_oauth_state?state=eq.${encodeURIComponent(state)}&select=state,code_verifier,created_by,created_at`);
   const stateRows = stateRes.ok ? await stateRes.json() : [];
   const stateRow = stateRows[0];
   if (!stateRow) return back(response, { mp: "error", detalle: "La solicitud venció o no es válida. Probá de nuevo." });
   await rest(cfg, `payment_oauth_state?state=eq.${encodeURIComponent(state)}`, { method: "DELETE" });
-  if (Date.now() - new Date(stateRow.created_at).getTime() > 15 * 60 * 1000) {
-    return back(response, { mp: "error", detalle: "La solicitud venció. Generá el QR otra vez." });
+  if (Date.now() - new Date(stateRow.created_at).getTime() > 60 * 60 * 1000) {
+    return back(response, { mp: "error", detalle: "El link venció (dura una hora). Generá uno nuevo desde el panel." });
   }
 
   const redirectUri = cfg.redirectUri || `https://${request.headers.host}/api/mp-callback`;

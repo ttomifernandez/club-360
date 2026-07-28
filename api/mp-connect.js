@@ -86,7 +86,7 @@ export default async function handler(request, response) {
       return response.status(400).json({ error: "Faltan MP_CLIENT_ID y MP_CLIENT_SECRET en las variables de entorno." });
     }
     // Limpieza de intentos abandonados.
-    const cutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const cutoff = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     await rest(cfg, `payment_oauth_state?created_at=lt.${cutoff}`, { method: "DELETE" });
 
     const state = crypto.randomBytes(24).toString("hex");
