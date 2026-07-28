@@ -79,7 +79,7 @@
     .auth-card h2{font:800 25px Manrope;margin:18px 0 7px}.auth-card p{color:var(--muted);line-height:1.55;margin:0 0 20px}.auth-card form{display:grid;gap:13px}.auth-card input{border:1px solid var(--line);padding:12px;border-radius:10px}.auth-error{color:var(--danger);font-size:13px;min-height:19px}.auth-error.ok{color:var(--green2)}
     .auth-link{border:0;background:none;color:var(--green2);font-weight:700;font-size:13px;padding:10px 0 0;width:100%}.auth-link:hover{text-decoration:underline}.connection{font-size:11px;color:var(--muted);margin-top:15px}
     @media(max-width:980px){.shell{grid-template-columns:76px 1fr}.sidebar{padding:22px 10px}.brand{padding:0 7px 23px}.brand-copy,.nav span:not(.icon),.menu-label,.sidebar-foot{display:none}.nav button{justify-content:center}.nav button span.nav-badge{display:inline-block;position:absolute;top:2px;right:4px;margin:0;padding:1px 6px}.stats{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:680px){.shell{display:block}.sidebar{height:auto;position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;padding:8px}.brand,.menu-label,.sidebar-foot{display:none}.nav{display:flex;justify-content:space-around}.nav button{padding:10px}.nav button span:not(.icon){display:none}.nav button span.nav-badge{display:inline-block;position:absolute;top:-2px;right:0;margin:0;padding:1px 6px}.topbar{height:65px;padding:0 12px}.status,.user-copy,.top-actions>a{display:none}.content{padding:20px 14px 90px}.intro{align-items:flex-start;gap:12px}.intro h2{font-size:23px}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:14px}.stat strong{font-size:22px}.panel-head{align-items:stretch;flex-direction:column}.tools{display:grid;grid-template-columns:1fr auto}.search{min-width:0}.order-tools{display:grid;grid-template-columns:1fr 1fr}.order-tools .search{grid-column:1/-1}.table-wrap{overflow:auto}table{min-width:730px}.form{grid-template-columns:1fr}.field.full{grid-column:auto}}
+    @media(max-width:680px){.shell{display:block}.sidebar{height:auto;position:fixed;left:0;right:0;bottom:0;top:auto;z-index:20;padding:8px}.brand,.menu-label,.sidebar-foot{display:none}.nav{display:flex;justify-content:space-around}.nav button{padding:10px}.nav button span:not(.icon){display:none}.nav button span.nav-badge{display:inline-block;position:absolute;top:-2px;right:0;margin:0;padding:1px 6px}.collapse-btn{display:none}.topbar{height:65px;padding:0 12px}.status,.user-copy,.top-actions>a{display:none}.content{padding:20px 14px 90px}.intro{align-items:flex-start;gap:12px}.intro h2{font-size:23px}.stats{grid-template-columns:1fr 1fr;gap:9px}.stat{padding:14px}.stat strong{font-size:22px}.panel-head{align-items:stretch;flex-direction:column}.tools{display:grid;grid-template-columns:1fr auto}.search{min-width:0}.order-tools{display:grid;grid-template-columns:1fr 1fr}.order-tools .search{grid-column:1/-1}.table-wrap{overflow:auto}table{min-width:730px}.form{grid-template-columns:1fr}.field.full{grid-column:auto}}
   </style>
 </head>
 <body>
@@ -443,7 +443,7 @@ function renderDashboard(){
  if(!totalPrev&&!totalThis)deltaBox.textContent="Sin ventas todavía";
  else if(!totalPrev)deltaBox.textContent=`${thisMonth.length} ${thisMonth.length===1?"venta":"ventas"} este mes`;
  else{const pct=Math.round((totalThis-totalPrev)/totalPrev*100);deltaBox.innerHTML=`<span class="delta ${pct>=0?"up":"down"}">${pct>=0?"▲":"▼"} ${Math.abs(pct)}%</span> vs. mes anterior`}
- document.getElementById("statAvg").textContent=thisMonth.length?money(totalThis/thisMonth.length):"$0";
+ document.getElementById("statAvg").textContent=thisMonth.length?money(Math.round(totalThis/thisMonth.length)):"$0";
  document.getElementById("statAvgHint").textContent=thisMonth.length?`${thisMonth.length} ${thisMonth.length===1?"pedido":"pedidos"} este mes`:"Del mes";
 
  const pending=orders.filter(o=>o.status==="pending");
@@ -544,7 +544,6 @@ function renderOrders(){
  const pending=orders.filter(o=>o.status==="pending").length;
  const badge=document.getElementById("ordersBadge");badge.hidden=!pending;badge.textContent=pending;
  knownMaxOrder=orders.reduce((max,o)=>Math.max(max,Number(o.order_number)||0),0);
- document.getElementById("orderCount").textContent=orders.length;document.getElementById("salesTotal").textContent=orders.length?(pending?`${pending} pendiente${pending>1?"s":""} · `:"")+money(orders.filter(o=>o.status!=="cancelled").reduce((sum,o)=>sum+Number(o.total),0))+" acumulado":"Sin ventas registradas";
  document.getElementById("ordersNotice").classList.toggle("show",!orders.length);
  renderDashboard();
  const list=filteredOrders();
