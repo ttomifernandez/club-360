@@ -31,6 +31,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://rjknnkmfxzjhguipixhq.supabase.co">
+    <!-- Despierta la función de config mientras se parsea el HTML. -->
+    <link rel="preload" href="/api/config" as="fetch">
     <!-- Fuentes sin bloquear el render: cargan como "print" y se activan al llegar. -->
     <link
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
@@ -2505,6 +2507,9 @@
             if (!banners?.length) return;
             heroCount = banners.length;
             const hero = document.getElementById("inicio");
+            // El hero no se achica al entrar el banner remoto: si cambiara de
+            // altura empujaría todo lo de abajo (era el grueso del CLS).
+            hero.style.minHeight = hero.offsetHeight + "px";
             hero.querySelectorAll(".hero-slide-bg").forEach(el => el.remove());
 
             heroBox.innerHTML = banners.map((b, i) => `
