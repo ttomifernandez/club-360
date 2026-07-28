@@ -575,6 +575,13 @@
             box-shadow: 0 8px 20px rgba(4, 120, 87, 0.2);
         }
 
+        .catalog-empty {
+            text-align: center;
+            color: var(--slate-400);
+            font-size: 1.05rem;
+            padding: 3.5rem 1rem;
+        }
+
         /* ===== GRID DE PRODUCTOS ===== */
         .products-grid {
             display: grid;
@@ -1392,6 +1399,7 @@
             <div class="products-grid" id="productsGrid">
                 <!-- Los productos se renderizan por JS -->
             </div>
+            <p class="catalog-empty" id="catalogEmpty" hidden>Todavía no hay productos en esta categoría. Escribinos y te contamos las novedades.</p>
         </div>
     </section>
 
@@ -1479,6 +1487,7 @@
         // ===== DATOS DE PRODUCTOS =====
         const WA_NUMBER = "5493515929043";
         let storeDb = null;
+        let CATEGORIES = [];
 
         let PRODUCTS = [
             {
@@ -1627,6 +1636,12 @@
               grid.appendChild(card);
               observer.observe(card);
           });
+          updateCatalogEmpty();
+        }
+
+        function updateCatalogEmpty() {
+            const visible = [...grid.children].some(card => !card.classList.contains("hidden"));
+            document.getElementById("catalogEmpty").hidden = visible;
         }
         renderCatalog();
 
@@ -1854,7 +1869,10 @@
 
         function renderFilters() {
             const current = filterBar.querySelector(".filter-btn.active")?.dataset.filter || "all";
+            // Las categorías activas de Supabase mandan (incluso sin productos
+            // todavía); sin catálogo remoto se derivan de los productos locales.
             const cats = new Map();
+            CATEGORIES.forEach(c => cats.set(c.slug, c.name));
             PRODUCTS.forEach(p => { if (p.cat && !cats.has(p.cat)) cats.set(p.cat, p.catLabel || p.cat); });
             const active = current === "all" || cats.has(current) ? current : "all";
             filterBar.innerHTML = `<button class="filter-btn${active === "all" ? " active" : ""}" data-filter="all">Todos</button>` +
@@ -1872,6 +1890,7 @@
             document.querySelectorAll(".product-card").forEach(card => {
                 card.classList.toggle("hidden", f !== "all" && card.dataset.cat !== f);
             });
+            updateCatalogEmpty();
         });
 
         // ===== SCROLL ANIMATIONS (elementos estáticos) =====
@@ -1890,10 +1909,14 @@
                 const remoteDb = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
                     auth: { persistSession: false, autoRefreshToken: false, storageKey: "br369-store-public" }
                 });
-                const { data, error } = await remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at");
+                const [{ data, error }, categoryResult] = await Promise.all([
+                    remoteDb.from("products").select("*,categories(name,slug)").eq("active", true).order("created_at"),
+                    remoteDb.from("categories").select("name,slug").eq("active", true).order("sort_order")
+                ]);
                 if (error) throw error;
                 if (!data?.length) return;
                 storeDb = remoteDb;
+                CATEGORIES = categoryResult.error ? [] : (categoryResult.data || []);
                 PRODUCTS = data.map(p => ({
                     id: p.slug,
                     dbId: p.id,
