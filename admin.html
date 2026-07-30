@@ -121,6 +121,8 @@
       <button data-view="orders"><span class="icon">▤</span><span>Pedidos</span><span class="nav-badge" id="ordersBadge" hidden>0</span></button>
       <button data-view="customers"><span class="icon">☺</span><span>Clientes</span></button>
       <button data-view="coupons"><span class="icon">%</span><span>Cupones</span></button>
+      <button data-view="sellers"><span class="icon">⚑</span><span>Vendedores</span></button>
+      <button data-view="leads"><span class="icon">✉</span><span>Cursos</span></button>
       <button data-view="users"><span class="icon">♙</span><span>Usuarios</span></button>
       <button data-view="settings"><span class="icon">⚙</span><span>Configuración</span></button>
       <button data-view="learn"><span class="icon">▶</span><span>Aprendizaje</span></button>
@@ -177,6 +179,15 @@
         </div>
       </section>
       <section class="view" id="coupons"><div class="intro"><div><h2>Cupones</h2><p>Descuentos con vigencia y límites de uso.</p></div><button class="btn primary" id="newCoupon">+ Nuevo cupón</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Descuento</th><th>Vigencia</th><th>Usos</th><th>Estado</th><th></th></tr></thead><tbody id="couponRows"></tbody></table></div></div></section>
+      <section class="view" id="sellers">
+        <div class="intro"><div><h2>Vendedores</h2><p>Cada vendedor tiene su propio link; las ventas que entran por ahí quedan asociadas a él.</p></div><button class="btn primary" id="newSeller">+ Nuevo vendedor</button></div>
+        <div class="panel"><div class="panel-head"><h3>Todos los vendedores</h3><span class="dash-note">Comisión actual: <strong id="sellerCommissionNote">—</strong> · se cambia en Configuración → Textos de la home</span></div><div class="table-wrap"><table><thead><tr><th>Vendedor</th><th>Link</th><th>Ventas</th><th>Facturado</th><th>Comisión</th><th>Estado</th><th></th></tr></thead><tbody id="sellerRows"></tbody></table></div></div>
+      </section>
+      <section class="view" id="leads">
+        <div class="intro"><div><h2>Inscripciones a cursos</h2><p>Quién dejó nombre y teléfono en el botón que lleva a la plataforma de cursos.</p></div></div>
+        <div class="stats"><div class="stat"><span>Inscriptos</span><strong id="leadsCount">0</strong><small>Total registrado</small></div></div>
+        <div class="panel"><div class="panel-head"><h3 id="leadsSummary">Inscriptos</h3><div class="tools"><input class="search" id="leadSearch" placeholder="Buscar por nombre o teléfono"></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th><th></th></tr></thead><tbody id="leadRows"></tbody></table></div></div>
+      </section>
       <section class="view" id="users">
         <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div><button class="btn primary" id="newUserBtn" hidden>+ Nuevo usuario</button></div>
         <div class="panel"><div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Rol</th><th>Alta</th><th>Acceso</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div></div>
@@ -356,6 +367,19 @@
     <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar cupón</button></div>
   </form>
 </dialog>
+<dialog id="sellerModal">
+  <form method="dialog" id="sellerForm">
+    <div class="modal-head"><h3 id="sellerModalTitle">Nuevo vendedor</h3><button class="close" value="cancel" formnovalidate aria-label="Cerrar">×</button></div>
+    <div class="form">
+      <input type="hidden" id="sellerId">
+      <div class="field full"><label>Nombre</label><input id="sellerName" required></div>
+      <div class="field full"><label>Código del link</label><input id="sellerCode" required></div>
+      <label class="check full"><input id="sellerActive" type="checkbox" checked> Vendedor activo</label>
+      <span class="field-hint" style="grid-column:1/-1" id="sellerLinkHint"></span>
+    </div>
+    <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar vendedor</button></div>
+  </form>
+</dialog>
 <div class="toast" id="toast">Cambios guardados</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -375,6 +399,8 @@ let products=load();
 let categories=[];
 let coupons=[];
 let orders=[];
+let sellers=[];
+let courseLeads=[];
 let profilesList=[];
 let orderItems=new Map();
 let currentRole=null;
@@ -384,11 +410,11 @@ const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",s
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
 const ROLE_PERMS={
- owner:{views:["dashboard","products","categories","orders","coupons","users","settings","learn","customers"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write"},
- operator:{views:["dashboard","products","categories","orders","coupons","learn","customers"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read"},
- catalog:{views:["dashboard","products","categories","learn"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none"},
- support:{views:["dashboard","products","categories","orders","coupons","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read"},
- auditor:{views:["dashboard","products","categories","orders","coupons","users","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read"}
+ owner:{views:["dashboard","products","categories","orders","coupons","sellers","leads","users","settings","learn","customers"],products:"write",remove:true,categories:"write",orders:"write",coupons:"write",users:"write",sellers:"write"},
+ operator:{views:["dashboard","products","categories","orders","coupons","sellers","leads","learn","customers"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read",sellers:"read"},
+ catalog:{views:["dashboard","products","categories","learn"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none",sellers:"none"},
+ support:{views:["dashboard","products","categories","orders","coupons","leads","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",sellers:"none"},
+ auditor:{views:["dashboard","products","categories","orders","coupons","sellers","leads","users","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read",sellers:"read"}
 };
 const ALL_PERMS=ROLE_PERMS.owner;
 let perms=ALL_PERMS;
@@ -401,7 +427,8 @@ function applyPermissions(){
  document.querySelectorAll("[data-new]").forEach(b=>b.hidden=!canWrite("products"));
  document.getElementById("newCategory").hidden=!canWrite("categories");
  document.getElementById("newCoupon").hidden=!canWrite("coupons");
- render();renderCoupons();renderOrders();renderUsers();renderTutorials();renderCustomers();
+ document.getElementById("newSeller").hidden=!canWrite("sellers");
+ render();renderCoupons();renderOrders();renderUsers();renderTutorials();renderCustomers();renderSellers();renderLeads();
 }
 const money=n=>"$"+Number(n||0).toLocaleString("es-AR");
 const slugify=s=>s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
@@ -717,6 +744,41 @@ async function loadCustomers(){
  customers=error?[]:(data||[]);
  renderCustomers();
 }
+function sellerSales(s){
+ const mine=orders.filter(o=>o.seller_id===s.id&&o.status!=="cancelled");
+ return {count:mine.length,total:mine.reduce((sum,o)=>sum+Number(o.total),0)};
+}
+function renderSellers(){
+ document.getElementById("newSeller").hidden=!canWrite("sellers");
+ const commission=Number(siteTexts.find(t=>t.key==="seller_commission_percent")?.value)||0;
+ const note=document.getElementById("sellerCommissionNote");
+ if(note)note.textContent=commission+"%";
+ document.getElementById("sellerRows").innerHTML=sellers.length?sellers.map(s=>{
+   const stats=sellerSales(s);
+   const link=`${location.origin}/?v=${encodeURIComponent(s.code)}`;
+   return `<tr><td><strong>${escapeHtml(s.name)}</strong></td><td><div class="row-actions"><input readonly value="${escapeHtml(link)}" style="border:1px solid var(--slate-200,#e2e8f0);border-radius:8px;padding:6px 8px;font-size:.82rem;width:190px" onclick="this.select()"><button type="button" data-seller-copy="${escapeHtml(link)}" title="Copiar link">⧉</button></div></td><td>${stats.count}</td><td><strong>${money(stats.total)}</strong></td><td>${money(stats.total*commission/100)}</td><td><span class="pill ${s.active?"":"off"}">${s.active?"Activo":"Inactivo"}</span></td><td>${canWrite("sellers")?`<div class="row-actions"><button data-seller-edit="${s.id}" title="Editar">✎</button><button data-seller-toggle="${s.id}" title="${s.active?"Desactivar":"Activar"}">${s.active?"◉":"○"}</button>${perms.remove?`<button data-seller-delete="${s.id}" title="Eliminar">⌫</button>`:""}</div>`:""}</td></tr>`;
+ }).join(""):`<tr><td colspan="7" class="empty">Todavía no hay vendedores.</td></tr>`;
+}
+async function loadSellers(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("sellers").select("*").order("created_at",{ascending:false});
+ sellers=error?[]:(data||[]);
+ renderSellers();
+}
+function renderLeads(){
+ const searchEl=document.getElementById("leadSearch");
+ const query=(searchEl?.value||"").trim().toLowerCase();
+ document.getElementById("leadsCount").textContent=courseLeads.length;
+ const list=courseLeads.filter(l=>!query||`${l.name} ${l.phone}`.toLowerCase().includes(query));
+ document.getElementById("leadsSummary").textContent=`${list.length} ${list.length===1?"inscripto":"inscriptos"}${list.length!==courseLeads.length?` de ${courseLeads.length}`:""}`;
+ document.getElementById("leadRows").innerHTML=list.length?list.map(l=>`<tr><td><strong>${escapeHtml(l.name)}</strong></td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td><td><a class="btn" href="${waLink(l.phone)}" target="_blank" rel="noopener" style="padding:6px 10px">WhatsApp</a></td></tr>`).join(""):`<tr><td colspan="4" class="empty">${courseLeads.length?"Nadie coincide con la búsqueda.":"Todavía no hay inscriptos."}</td></tr>`;
+}
+async function loadCourseLeads(){
+ if(!remoteMode)return;
+ const {data,error}=await db.from("course_leads").select("*").order("created_at",{ascending:false});
+ courseLeads=error?[]:(data||[]);
+ renderLeads();
+}
 document.getElementById("customerSearch").oninput=renderCustomers;
 document.getElementById("customerRows").onclick=async e=>{
  const del=e.target.closest("[data-customer-del]");
@@ -993,7 +1055,7 @@ document.getElementById("saveTexts").onclick=async()=>{
    const {error}=await db.from("site_texts").update({value:item.value}).eq("key",item.key);
    if(error){failed=error.message;break}
  }
- await loadSiteTexts();renderSiteTexts();
+ await loadSiteTexts();renderSiteTexts();renderSellers();
  button.disabled=false;button.textContent="Guardar cambios";
  toast(failed?"No se pudo guardar: "+failed:`${changed.length} ${changed.length===1?"texto actualizado":"textos actualizados"}`,failed?4000:1800);
 };
@@ -1006,7 +1068,7 @@ document.getElementById("restoreAllTexts").onclick=async()=>{
    const {error}=await db.from("site_texts").update({value:t.default_value}).eq("key",t.key);
    if(error){failed=error.message;break}
  }
- await loadSiteTexts();renderSiteTexts();
+ await loadSiteTexts();renderSiteTexts();renderSellers();
  button.disabled=false;button.textContent="Restaurar todos";
  toast(failed?"No se pudo restaurar: "+failed:"Textos restaurados",failed?4000:1800);
 };
@@ -1126,7 +1188,7 @@ function openModal(id){
  document.getElementById("imageFile").value="";document.getElementById("uploadStatus").textContent="";
  document.getElementById("category").value=p?.catLabel||"";document.getElementById("active").checked=p?.active??true;document.getElementById("productModal").showModal();
 }
-function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje",customers:"Clientes"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
+function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.toggle("active",v.id===id));document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===id));const labels={dashboard:"Resumen",products:"Productos",categories:"Categorías",orders:"Pedidos",coupons:"Cupones",sellers:"Vendedores",leads:"Cursos",users:"Usuarios",settings:"Configuración",learn:"Aprendizaje",customers:"Clientes"};document.getElementById("pageTitle").textContent=labels[id]||"Panel";
  if(id==="settings"&&remoteMode){renderMercadoPago();renderSiteTexts()}else stopMpPoll();
  if(id==="dashboard")renderDashboard();
 }
@@ -1265,6 +1327,36 @@ document.getElementById("couponRows").onclick=async e=>{
  if(toggle){const c=coupons.find(x=>x.id===toggle.dataset.couponToggle);const {error}=await db.from("coupons").update({active:!c.active}).eq("id",c.id);if(error)return toast(error.message);await loadRemoteAdminData();toast("Cupón actualizado")}
  if(del&&confirm("¿Eliminar este cupón?")){const {error}=await db.from("coupons").delete().eq("id",del.dataset.couponDelete);if(error)return toast(error.message);await loadRemoteAdminData();toast("Cupón eliminado")}
 };
+function openSellerModal(id){
+ const s=sellers.find(x=>x.id===id);
+ document.getElementById("sellerModalTitle").textContent=s?"Editar vendedor":"Nuevo vendedor";
+ document.getElementById("sellerId").value=s?.id||"";
+ document.getElementById("sellerName").value=s?.name||"";
+ document.getElementById("sellerCode").value=s?.code||"";
+ document.getElementById("sellerActive").checked=s?.active??true;
+ document.getElementById("sellerLinkHint").textContent=s?`Link: ${location.origin}/?v=${s.code}`:"El código sale del nombre; lo podés cambiar antes de guardar.";
+ document.getElementById("sellerModal").showModal();
+}
+document.getElementById("sellerName").oninput=e=>{if(!document.getElementById("sellerId").value)document.getElementById("sellerCode").value=slugify(e.target.value)};
+document.getElementById("newSeller").onclick=()=>remoteMode?openSellerModal():toast("Conectá Supabase para administrar vendedores.");
+document.getElementById("sellerForm").onsubmit=async e=>{
+ e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("sellerModal").close();return}
+ const id=document.getElementById("sellerId").value;
+ const row={name:document.getElementById("sellerName").value.trim(),code:slugify(document.getElementById("sellerCode").value),active:document.getElementById("sellerActive").checked};
+ if(!row.name||!row.code)return toast("Completá nombre y código.");
+ const query=id?db.from("sellers").update(row).eq("id",id):db.from("sellers").insert(row);
+ const {error}=await query;
+ if(error)return toast(error.message.includes("duplicate")?"Ya existe un vendedor con ese código.":"No se pudo guardar: "+error.message);
+ document.getElementById("sellerModal").close();await loadSellers();toast("Vendedor guardado");
+};
+document.getElementById("sellerRows").onclick=async e=>{
+ const edit=e.target.closest("[data-seller-edit]"),toggle=e.target.closest("[data-seller-toggle]"),del=e.target.closest("[data-seller-delete]"),copy=e.target.closest("[data-seller-copy]");
+ if(copy){navigator.clipboard?.writeText(copy.dataset.sellerCopy).then(()=>toast("Link copiado")).catch(()=>toast("No se pudo copiar"));return}
+ if(edit)openSellerModal(edit.dataset.sellerEdit);
+ if(toggle){const s=sellers.find(x=>x.id===toggle.dataset.sellerToggle);const {error}=await db.from("sellers").update({active:!s.active}).eq("id",s.id);if(error)return toast(error.message);await loadSellers();toast("Vendedor actualizado")}
+ if(del&&confirm("¿Eliminar este vendedor? Sus ventas pasadas quedan sin vendedor asignado.")){const {error}=await db.from("sellers").delete().eq("id",del.dataset.sellerDelete);if(error)return toast(error.message);await loadSellers();toast("Vendedor eliminado")}
+};
+document.getElementById("leadSearch").oninput=renderLeads;
 document.getElementById("orderRows").onchange=async e=>{
  const select=e.target.closest("[data-order-status]");if(!select)return;
  const {error}=await db.rpc("set_order_status",{p_order_id:select.dataset.orderStatus,p_status:select.value});
@@ -1314,7 +1406,7 @@ async function activateSession(session){
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
  currentRole=profile.role;currentUserId=session.user.id;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
- await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts(),loadBanners()]);
+ await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts(),loadBanners(),loadSellers(),loadCourseLeads()]);
  applyPermissions();
  startOrderWatch();
  handleMercadoPagoReturn();
