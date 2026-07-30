@@ -75,7 +75,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const WA_NUMBER = "5493515227465";
+  let WA_NUMBER = "5493515227465";
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
   const fmt = n => "$" + Number(n || 0).toLocaleString("es-AR");
   const card = document.getElementById("card");
@@ -135,7 +135,12 @@
       const db = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
         auth: { persistSession: false, autoRefreshToken: false, storageKey: "br360-tracking" }
       });
-      const { data, error } = await db.rpc("order_tracking", { p_token: token });
+      const [{ data, error }, textsRes] = await Promise.all([
+        db.rpc("order_tracking", { p_token: token }),
+        db.from("site_texts").select("value").eq("key", "whatsapp_number").maybeSingle()
+      ]);
+      const waDigits = (textsRes?.data?.value || "").replace(/\D/g, "");
+      if (waDigits) WA_NUMBER = waDigits;
       if (error || !data) {
         return show(`<p class="msg"><strong>No encontramos ese pedido</strong>Puede que el link esté incompleto. Escribinos por WhatsApp y lo vemos juntos.</p>`);
       }
