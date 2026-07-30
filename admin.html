@@ -339,7 +339,7 @@
       <div class="field full"><label>Nombre y apellido</label><input id="nuName" required></div>
       <div class="field full"><label>Email</label><input id="nuEmail" type="email" required autocomplete="off"></div>
       <div class="field"><label>Contraseña temporal</label><input id="nuPassword" required minlength="8" autocomplete="off" placeholder="Mínimo 8 caracteres"></div>
-      <div class="field"><label>Rol</label><select id="nuRole"><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support" selected>Atención</option><option value="auditor">Auditor</option><option value="owner">Propietario</option></select></div>
+      <div class="field"><label>Rol</label><select id="nuRole"><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support" selected>Atención</option><option value="auditor">Auditor</option><option value="seller">Vendedor</option><option value="owner">Propietario</option></select></div>
       <label class="check full"><input id="nuActive" type="checkbox" checked> Acceso al panel habilitado</label>
       <span class="field-hint" style="grid-column:1/-1">Pasale el email y la contraseña temporal a la persona: entra directo, sin email de confirmación.</span>
       <span class="field-hint" style="grid-column:1/-1;color:var(--danger)" id="nuError"></span>
@@ -353,7 +353,7 @@
     <div class="form">
       <input type="hidden" id="userId">
       <div class="field full"><label>Nombre</label><input id="userFullName" required></div>
-      <div class="field"><label>Rol</label><select id="userRoleSelect"><option value="owner">Propietario</option><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support">Atención</option><option value="auditor">Auditor</option></select></div>
+      <div class="field"><label>Rol</label><select id="userRoleSelect"><option value="owner">Propietario</option><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support">Atención</option><option value="auditor">Auditor</option><option value="seller">Vendedor</option></select></div>
       <label class="check full"><input id="userActive" type="checkbox"> Acceso al panel habilitado</label>
       <label class="check full"><input id="userCanManageLeads" type="checkbox"> Puede exportar y eliminar interesados en cursos</label>
       <span class="field-hint" style="grid-column:1/-1" id="userSelfHint"></span>
@@ -377,6 +377,9 @@
       <div class="field full"><label>Código del link</label><input id="sellerCode" required></div>
       <label class="check full"><input id="sellerActive" type="checkbox" checked> Vendedor activo</label>
       <span class="field-hint" style="grid-column:1/-1" id="sellerLinkHint"></span>
+      <div class="field full"><label>Email de acceso</label><input id="sellerEmail" type="email" autocomplete="off"></div>
+      <div class="field"><label>Contraseña temporal</label><input id="sellerPassword" autocomplete="off" placeholder="Mínimo 8 caracteres"></div>
+      <span class="field-hint" style="grid-column:1/-1" id="sellerAccountHint"></span>
     </div>
     <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar vendedor</button></div>
   </form>
@@ -409,7 +412,7 @@ let currentUserId=null;
 let isSuperadmin=false;
 let canManageLeadsFlag=false;
 const canManageLeads=()=>currentRole==="owner"||canManageLeadsFlag;
-const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor"};
+const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor",seller:"Vendedor"};
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
 const ROLE_PERMS={
@@ -417,7 +420,8 @@ const ROLE_PERMS={
  operator:{views:["dashboard","products","categories","orders","coupons","sellers","leads","learn","customers"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read",sellers:"read"},
  catalog:{views:["dashboard","products","categories","learn"],products:"write",remove:false,categories:"write",orders:"none",coupons:"none",sellers:"none"},
  support:{views:["dashboard","products","categories","orders","coupons","leads","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",sellers:"none"},
- auditor:{views:["dashboard","products","categories","orders","coupons","sellers","leads","users","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read",sellers:"read"}
+ auditor:{views:["dashboard","products","categories","orders","coupons","sellers","leads","users","learn","customers"],products:"read",remove:false,categories:"read",orders:"read",coupons:"read",users:"read",sellers:"read"},
+ seller:{views:["dashboard","products","categories","orders","coupons","leads","learn","customers"],products:"write",remove:false,categories:"write",orders:"write",coupons:"read",sellers:"none"}
 };
 const ALL_PERMS=ROLE_PERMS.owner;
 let perms=ALL_PERMS;
@@ -759,7 +763,7 @@ function renderSellers(){
  document.getElementById("sellerRows").innerHTML=sellers.length?sellers.map(s=>{
    const stats=sellerSales(s);
    const link=`${location.origin}/?v=${encodeURIComponent(s.code)}`;
-   return `<tr><td><strong>${escapeHtml(s.name)}</strong></td><td><div class="row-actions"><input readonly value="${escapeHtml(link)}" style="border:1px solid var(--slate-200,#e2e8f0);border-radius:8px;padding:6px 8px;font-size:.82rem;width:190px" onclick="this.select()"><button type="button" data-seller-copy="${escapeHtml(link)}" title="Copiar link">⧉</button></div></td><td>${stats.count}</td><td><strong>${money(stats.total)}</strong></td><td>${money(stats.total*commission/100)}</td><td><span class="pill ${s.active?"":"off"}">${s.active?"Activo":"Inactivo"}</span></td><td>${canWrite("sellers")?`<div class="row-actions"><button data-seller-edit="${s.id}" title="Editar">✎</button><button data-seller-toggle="${s.id}" title="${s.active?"Desactivar":"Activar"}">${s.active?"◉":"○"}</button>${perms.remove?`<button data-seller-delete="${s.id}" title="Eliminar">⌫</button>`:""}</div>`:""}</td></tr>`;
+   return `<tr><td><strong>${escapeHtml(s.name)}</strong>${s.user_id?"":'<br><small style="color:var(--muted)">Sin cuenta de acceso</small>'}</td><td><div class="row-actions"><input readonly value="${escapeHtml(link)}" style="border:1px solid var(--slate-200,#e2e8f0);border-radius:8px;padding:6px 8px;font-size:.82rem;width:190px" onclick="this.select()"><button type="button" data-seller-copy="${escapeHtml(link)}" title="Copiar link">⧉</button></div></td><td>${stats.count}</td><td><strong>${money(stats.total)}</strong></td><td>${money(stats.total*commission/100)}</td><td><span class="pill ${s.active?"":"off"}">${s.active?"Activo":"Inactivo"}</span></td><td>${canWrite("sellers")?`<div class="row-actions"><button data-seller-edit="${s.id}" title="Editar">✎</button><button data-seller-toggle="${s.id}" title="${s.active?"Desactivar":"Activar"}">${s.active?"◉":"○"}</button>${perms.remove?`<button data-seller-delete="${s.id}" title="Eliminar">⌫</button>`:""}</div>`:""}</td></tr>`;
  }).join(""):`<tr><td colspan="7" class="empty">Todavía no hay vendedores.</td></tr>`;
 }
 async function loadSellers(){
@@ -1399,6 +1403,14 @@ function openSellerModal(id){
  document.getElementById("sellerCode").value=s?.code||"";
  document.getElementById("sellerActive").checked=s?.active??true;
  document.getElementById("sellerLinkHint").textContent=s?`Link: ${location.origin}/?v=${s.code}`:"El código sale del nombre; lo podés cambiar antes de guardar.";
+ const hasAccount=Boolean(s?.user_id);
+ document.getElementById("sellerEmail").closest(".field").hidden=hasAccount;
+ document.getElementById("sellerPassword").closest(".field").hidden=hasAccount;
+ document.getElementById("sellerEmail").value="";
+ document.getElementById("sellerPassword").value="";
+ document.getElementById("sellerAccountHint").textContent=hasAccount
+   ?"Ya tiene una cuenta de acceso creada (rol Vendedor)."
+   :"Se crea la cuenta de acceso junto con el vendedor, con el rol Vendedor. Entra directo, sin email de confirmación.";
  document.getElementById("sellerModal").showModal();
 }
 document.getElementById("sellerName").oninput=e=>{if(!document.getElementById("sellerId").value)document.getElementById("sellerCode").value=slugify(e.target.value)};
@@ -1406,8 +1418,24 @@ document.getElementById("newSeller").onclick=()=>remoteMode?openSellerModal():to
 document.getElementById("sellerForm").onsubmit=async e=>{
  e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("sellerModal").close();return}
  const id=document.getElementById("sellerId").value;
+ const existing=sellers.find(x=>x.id===id);
+ const needsAccount=!existing?.user_id;
  const row={name:document.getElementById("sellerName").value.trim(),code:slugify(document.getElementById("sellerCode").value),active:document.getElementById("sellerActive").checked};
  if(!row.name||!row.code)return toast("Completá nombre y código.");
+ const email=document.getElementById("sellerEmail").value.trim();
+ const password=document.getElementById("sellerPassword").value;
+ if(needsAccount){
+   if(!email||!/.+@.+\..+/.test(email))return toast("Ingresá un email válido para la cuenta del vendedor.");
+   if(!password||password.length<8)return toast("La contraseña de acceso debe tener al menos 8 caracteres.");
+   try{
+     const {data:{session}}=await db.auth.getSession();
+     if(!session)throw new Error("Tu sesión venció: volvé a ingresar.");
+     const res=await fetch("/api/users",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+session.access_token},body:JSON.stringify({fullName:row.name,email,password,role:"seller",active:row.active})});
+     const out=await res.json().catch(()=>({}));
+     if(!res.ok)throw new Error(out.error||"No se pudo crear la cuenta del vendedor.");
+     row.user_id=out.id;
+   }catch(error){return toast(error.message,4000)}
+ }
  const query=id?db.from("sellers").update(row).eq("id",id):db.from("sellers").insert(row);
  const {error}=await query;
  if(error)return toast(error.message.includes("duplicate")?"Ya existe un vendedor con ese código.":"No se pudo guardar: "+error.message);

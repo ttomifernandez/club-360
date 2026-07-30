@@ -51,7 +51,7 @@ export default async function handler(request, response) {
   }
 
   const { email, password, fullName, role, active } = request.body || {};
-  const validRoles = ["owner", "operator", "catalog", "support", "auditor"];
+  const validRoles = ["owner", "operator", "catalog", "support", "auditor", "seller"];
   if (!email || !/.+@.+\..+/.test(email)) return response.status(400).json({ error: "Email inválido." });
   if (!password || password.length < 8) return response.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres." });
   if (!validRoles.includes(role)) return response.status(400).json({ error: "Rol inválido." });
@@ -80,7 +80,7 @@ export default async function handler(request, response) {
     body: JSON.stringify([{ id: created.id, full_name: fullName || email, role, active: active !== false }]),
   });
   if (!upsertRes.ok) {
-    return response.status(200).json({ ok: true, warning: "Usuario creado, pero no se pudo fijar el rol: editalo desde la tabla." });
+    return response.status(200).json({ ok: true, id: created.id, warning: "Usuario creado, pero no se pudo fijar el rol: editalo desde la tabla." });
   }
-  return response.status(200).json({ ok: true });
+  return response.status(200).json({ ok: true, id: created.id });
 }
