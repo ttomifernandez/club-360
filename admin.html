@@ -186,7 +186,7 @@
       <section class="view" id="leads">
         <div class="intro"><div><h2>Interesados en cursos — Plataforma Agropecuaria 360</h2><p>Quién dejó nombre y teléfono en el botón que lleva a la plataforma de cursos, en plataformaagropecuaria360.com.</p></div></div>
         <div class="stats"><div class="stat"><span>Interesados</span><strong id="leadsCount">0</strong><small>Total registrado</small></div></div>
-        <div class="panel"><div class="panel-head"><h3 id="leadsSummary">Interesados</h3><div class="tools"><button class="btn" id="leadExportCsv" hidden>Exportar Excel</button><button class="btn" id="leadExportPdf" hidden>Exportar PDF</button><input class="search" id="leadSearch" placeholder="Buscar por nombre o teléfono"></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th><th></th></tr></thead><tbody id="leadRows"></tbody></table></div></div>
+        <div class="panel"><div class="panel-head"><h3 id="leadsSummary">Interesados</h3><div class="tools"><input class="search" id="leadSearch" placeholder="Buscar por nombre o teléfono"><input type="date" id="leadFrom" aria-label="Desde"><input type="date" id="leadTo" aria-label="Hasta"><button class="btn" id="leadClear">Limpiar</button><button class="btn" id="leadExportCsv" hidden>Exportar Excel</button><button class="btn" id="leadExportPdf" hidden>Exportar PDF</button></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th><th></th></tr></thead><tbody id="leadRows"></tbody></table></div></div>
       </section>
       <section class="view" id="users">
         <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div><button class="btn primary" id="newUserBtn" hidden>+ Nuevo usuario</button></div>
@@ -769,6 +769,10 @@ async function loadSellers(){
  renderSellers();
 }
 let leadsListShown=[];
+function leadDateRange(){
+ const fromValue=document.getElementById("leadFrom").value,toValue=document.getElementById("leadTo").value;
+ return [fromValue?new Date(fromValue+"T00:00:00"):null,toValue?new Date(new Date(toValue+"T00:00:00").getTime()+86400000):null];
+}
 function renderLeads(){
  const searchEl=document.getElementById("leadSearch");
  const query=(searchEl?.value||"").trim().toLowerCase();
@@ -776,7 +780,14 @@ function renderLeads(){
  document.getElementById("leadExportCsv").hidden=!canManage;
  document.getElementById("leadExportPdf").hidden=!canManage;
  document.getElementById("leadsCount").textContent=courseLeads.length;
- const list=courseLeads.filter(l=>!query||`${l.name} ${l.phone}`.toLowerCase().includes(query));
+ const [from,to]=leadDateRange();
+ const list=courseLeads.filter(l=>{
+   if(query&&!`${l.name} ${l.phone}`.toLowerCase().includes(query))return false;
+   const created=new Date(l.created_at);
+   if(from&&created<from)return false;
+   if(to&&created>=to)return false;
+   return true;
+ });
  leadsListShown=list;
  document.getElementById("leadsSummary").textContent=`${list.length} ${list.length===1?"interesado":"interesados"}${list.length!==courseLeads.length?` de ${courseLeads.length}`:""}`;
  document.getElementById("leadRows").innerHTML=list.length?list.map(l=>`<tr><td><strong>${escapeHtml(l.name)}</strong></td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td><td><div class="row-actions"><a class="btn" href="${waLink(l.phone)}" target="_blank" rel="noopener" style="padding:6px 10px">WhatsApp</a>${canManage?`<button data-lead-delete="${l.id}" title="Eliminar">⌫</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="4" class="empty">${courseLeads.length?"Nadie coincide con la búsqueda.":"Todavía no hay interesados."}</td></tr>`;
@@ -794,10 +805,17 @@ function downloadFile(filename,content,type){
  a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
+function leadRangeLabel(){
+ const from=document.getElementById("leadFrom").value,to=document.getElementById("leadTo").value;
+ if(!from&&!to)return "Todo el período";
+ return `Del ${from?shortDate(from+"T00:00:00"):"inicio"} al ${to?shortDate(to+"T00:00:00"):"hoy"}`;
+}
 document.getElementById("leadExportCsv").onclick=()=>{
  if(!canManageLeads())return;
  if(!leadsListShown.length)return toast("No hay interesados para exportar.");
- downloadFile(`interesados-cursos-plataforma-agropecuaria-360-${new Date().toISOString().slice(0,10)}.csv`,leadsCsv(leadsListShown),"text/csv;charset=utf-8");
+ const from=document.getElementById("leadFrom").value,to=document.getElementById("leadTo").value;
+ const range=from||to?`_${from||"inicio"}_a_${to||"hoy"}`:"";
+ downloadFile(`interesados-cursos-plataforma-agropecuaria-360${range}.csv`,leadsCsv(leadsListShown),"text/csv;charset=utf-8");
 };
 document.getElementById("leadExportPdf").onclick=()=>{
  if(!canManageLeads())return;
@@ -805,7 +823,7 @@ document.getElementById("leadExportPdf").onclick=()=>{
  const win=window.open("","_blank");
  if(!win)return toast("El navegador bloqueó la ventana. Habilitá pop-ups para exportar el PDF.");
  const rows=leadsListShown.map(l=>`<tr><td>${escapeHtml(l.name)}</td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td></tr>`).join("");
- win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Interesados en cursos — Plataforma Agropecuaria 360</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#123b2f}h1{font-size:18px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:8px 10px;text-align:left;font-size:13px}th{background:#f1f5f3}</style></head><body><h1>Interesados en cursos — Plataforma Agropecuaria 360</h1><p>${new Date().toLocaleString("es-AR")} · ${leadsListShown.length} interesados</p><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+ win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Interesados en cursos — Plataforma Agropecuaria 360</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#123b2f}h1{font-size:18px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:8px 10px;text-align:left;font-size:13px}th{background:#f1f5f3}</style></head><body><h1>Interesados en cursos — Plataforma Agropecuaria 360</h1><p>${leadRangeLabel()} · generado ${new Date().toLocaleString("es-AR")} · ${leadsListShown.length} interesados</p><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
  win.document.close();
  win.onload=()=>win.print();
 };
@@ -1402,7 +1420,13 @@ document.getElementById("sellerRows").onclick=async e=>{
  if(toggle){const s=sellers.find(x=>x.id===toggle.dataset.sellerToggle);const {error}=await db.from("sellers").update({active:!s.active}).eq("id",s.id);if(error)return toast(error.message);await loadSellers();toast("Vendedor actualizado")}
  if(del&&confirm("¿Eliminar este vendedor? Sus ventas pasadas quedan sin vendedor asignado.")){const {error}=await db.from("sellers").delete().eq("id",del.dataset.sellerDelete);if(error)return toast(error.message);await loadSellers();toast("Vendedor eliminado")}
 };
-document.getElementById("leadSearch").oninput=renderLeads;
+["leadSearch","leadFrom","leadTo"].forEach(id=>document.getElementById(id).oninput=renderLeads);
+document.getElementById("leadClear").onclick=()=>{
+ document.getElementById("leadSearch").value="";
+ document.getElementById("leadFrom").value="";
+ document.getElementById("leadTo").value="";
+ renderLeads();
+};
 document.getElementById("orderRows").onchange=async e=>{
  const select=e.target.closest("[data-order-status]");if(!select)return;
  const {error}=await db.rpc("set_order_status",{p_order_id:select.dataset.orderStatus,p_status:select.value});
