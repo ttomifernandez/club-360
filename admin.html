@@ -184,9 +184,9 @@
         <div class="panel"><div class="panel-head"><h3>Todos los vendedores</h3><span class="dash-note">Comisión actual: <strong id="sellerCommissionNote">—</strong> · se cambia en Configuración → Textos de la home</span></div><div class="table-wrap"><table><thead><tr><th>Vendedor</th><th>Link</th><th>Ventas</th><th>Facturado</th><th>Comisión</th><th>Estado</th><th></th></tr></thead><tbody id="sellerRows"></tbody></table></div></div>
       </section>
       <section class="view" id="leads">
-        <div class="intro"><div><h2>Inscripciones a cursos</h2><p>Quién dejó nombre y teléfono en el botón que lleva a la plataforma de cursos.</p></div></div>
-        <div class="stats"><div class="stat"><span>Inscriptos</span><strong id="leadsCount">0</strong><small>Total registrado</small></div></div>
-        <div class="panel"><div class="panel-head"><h3 id="leadsSummary">Inscriptos</h3><div class="tools"><input class="search" id="leadSearch" placeholder="Buscar por nombre o teléfono"></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th><th></th></tr></thead><tbody id="leadRows"></tbody></table></div></div>
+        <div class="intro"><div><h2>Interesados en cursos — Plataforma Agropecuaria 360</h2><p>Quién dejó nombre y teléfono en el botón que lleva a la plataforma de cursos, en plataformaagropecuaria360.com.</p></div></div>
+        <div class="stats"><div class="stat"><span>Interesados</span><strong id="leadsCount">0</strong><small>Total registrado</small></div></div>
+        <div class="panel"><div class="panel-head"><h3 id="leadsSummary">Interesados</h3><div class="tools"><button class="btn" id="leadExportCsv" hidden>Exportar Excel</button><button class="btn" id="leadExportPdf" hidden>Exportar PDF</button><input class="search" id="leadSearch" placeholder="Buscar por nombre o teléfono"></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th><th></th></tr></thead><tbody id="leadRows"></tbody></table></div></div>
       </section>
       <section class="view" id="users">
         <div class="intro"><div><h2>Usuarios</h2><p>Quién puede entrar al panel y con qué rol.</p></div><button class="btn primary" id="newUserBtn" hidden>+ Nuevo usuario</button></div>
@@ -355,6 +355,7 @@
       <div class="field full"><label>Nombre</label><input id="userFullName" required></div>
       <div class="field"><label>Rol</label><select id="userRoleSelect"><option value="owner">Propietario</option><option value="operator">Operador</option><option value="catalog">Catálogo</option><option value="support">Atención</option><option value="auditor">Auditor</option></select></div>
       <label class="check full"><input id="userActive" type="checkbox"> Acceso al panel habilitado</label>
+      <label class="check full"><input id="userCanManageLeads" type="checkbox"> Puede exportar y eliminar interesados en cursos</label>
       <span class="field-hint" style="grid-column:1/-1" id="userSelfHint"></span>
     </div>
     <div class="modal-foot"><button class="btn" value="cancel" formnovalidate>Cancelar</button><button class="btn primary" value="default">Guardar usuario</button></div>
@@ -406,6 +407,8 @@ let orderItems=new Map();
 let currentRole=null;
 let currentUserId=null;
 let isSuperadmin=false;
+let canManageLeadsFlag=false;
+const canManageLeads=()=>currentRole==="owner"||canManageLeadsFlag;
 const ROLE_LABELS={owner:"Propietario",operator:"Operador",catalog:"Catálogo",support:"Atención",auditor:"Auditor"};
 // Qué ve y qué puede tocar cada rol. La base aplica lo mismo por RLS
 // (supabase/roles.sql): esto es la capa visual, no la barrera de seguridad.
@@ -765,14 +768,56 @@ async function loadSellers(){
  sellers=error?[]:(data||[]);
  renderSellers();
 }
+let leadsListShown=[];
 function renderLeads(){
  const searchEl=document.getElementById("leadSearch");
  const query=(searchEl?.value||"").trim().toLowerCase();
+ const canManage=canManageLeads();
+ document.getElementById("leadExportCsv").hidden=!canManage;
+ document.getElementById("leadExportPdf").hidden=!canManage;
  document.getElementById("leadsCount").textContent=courseLeads.length;
  const list=courseLeads.filter(l=>!query||`${l.name} ${l.phone}`.toLowerCase().includes(query));
- document.getElementById("leadsSummary").textContent=`${list.length} ${list.length===1?"inscripto":"inscriptos"}${list.length!==courseLeads.length?` de ${courseLeads.length}`:""}`;
- document.getElementById("leadRows").innerHTML=list.length?list.map(l=>`<tr><td><strong>${escapeHtml(l.name)}</strong></td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td><td><a class="btn" href="${waLink(l.phone)}" target="_blank" rel="noopener" style="padding:6px 10px">WhatsApp</a></td></tr>`).join(""):`<tr><td colspan="4" class="empty">${courseLeads.length?"Nadie coincide con la búsqueda.":"Todavía no hay inscriptos."}</td></tr>`;
+ leadsListShown=list;
+ document.getElementById("leadsSummary").textContent=`${list.length} ${list.length===1?"interesado":"interesados"}${list.length!==courseLeads.length?` de ${courseLeads.length}`:""}`;
+ document.getElementById("leadRows").innerHTML=list.length?list.map(l=>`<tr><td><strong>${escapeHtml(l.name)}</strong></td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td><td><div class="row-actions"><a class="btn" href="${waLink(l.phone)}" target="_blank" rel="noopener" style="padding:6px 10px">WhatsApp</a>${canManage?`<button data-lead-delete="${l.id}" title="Eliminar">⌫</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="4" class="empty">${courseLeads.length?"Nadie coincide con la búsqueda.":"Todavía no hay interesados."}</td></tr>`;
 }
+function leadsCsv(rows){
+ const esc=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+ const lines=[["Nombre","Teléfono","Fecha"].map(esc).join(",")];
+ rows.forEach(l=>lines.push([l.name,l.phone,new Date(l.created_at).toLocaleString("es-AR")].map(esc).join(",")));
+ return "﻿"+lines.join("\r\n");
+}
+function downloadFile(filename,content,type){
+ const blob=new Blob([content],{type});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+document.getElementById("leadExportCsv").onclick=()=>{
+ if(!canManageLeads())return;
+ if(!leadsListShown.length)return toast("No hay interesados para exportar.");
+ downloadFile(`interesados-cursos-plataforma-agropecuaria-360-${new Date().toISOString().slice(0,10)}.csv`,leadsCsv(leadsListShown),"text/csv;charset=utf-8");
+};
+document.getElementById("leadExportPdf").onclick=()=>{
+ if(!canManageLeads())return;
+ if(!leadsListShown.length)return toast("No hay interesados para exportar.");
+ const win=window.open("","_blank");
+ if(!win)return toast("El navegador bloqueó la ventana. Habilitá pop-ups para exportar el PDF.");
+ const rows=leadsListShown.map(l=>`<tr><td>${escapeHtml(l.name)}</td><td>${escapeHtml(l.phone)}</td><td>${shortDate(l.created_at)}</td></tr>`).join("");
+ win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Interesados en cursos — Plataforma Agropecuaria 360</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#123b2f}h1{font-size:18px}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #ccc;padding:8px 10px;text-align:left;font-size:13px}th{background:#f1f5f3}</style></head><body><h1>Interesados en cursos — Plataforma Agropecuaria 360</h1><p>${new Date().toLocaleString("es-AR")} · ${leadsListShown.length} interesados</p><table><thead><tr><th>Nombre</th><th>Teléfono</th><th>Fecha</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+ win.document.close();
+ win.onload=()=>win.print();
+};
+document.getElementById("leadRows").onclick=async e=>{
+ const del=e.target.closest("[data-lead-delete]");
+ if(!del||!canManageLeads())return;
+ const lead=courseLeads.find(l=>l.id===del.dataset.leadDelete);
+ if(!confirm(`¿Eliminar a ${lead?.name||"este interesado"}? No se puede deshacer.`))return;
+ const {error}=await db.from("course_leads").delete().eq("id",del.dataset.leadDelete);
+ if(error)return toast("No se pudo eliminar: "+error.message,4000);
+ await loadCourseLeads();toast("Interesado eliminado");
+};
 async function loadCourseLeads(){
  if(!remoteMode)return;
  const {data,error}=await db.from("course_leads").select("*").order("created_at",{ascending:false});
@@ -882,6 +927,7 @@ function openUserModal(id){
  document.getElementById("userFullName").value=u.full_name||"";
  document.getElementById("userRoleSelect").value=u.role;
  document.getElementById("userActive").checked=u.active;
+ document.getElementById("userCanManageLeads").checked=u.can_manage_leads===true;
  const self=u.id===currentUserId;
  document.getElementById("userRoleSelect").disabled=self;
  document.getElementById("userActive").disabled=self;
@@ -924,7 +970,7 @@ document.getElementById("newUserForm").onsubmit=async e=>{
 document.getElementById("userForm").onsubmit=async e=>{
  e.preventDefault();if(e.submitter?.value==="cancel"){document.getElementById("userModal").close();return}
  const id=document.getElementById("userId").value;
- const row={full_name:document.getElementById("userFullName").value.trim()};
+ const row={full_name:document.getElementById("userFullName").value.trim(),can_manage_leads:document.getElementById("userCanManageLeads").checked};
  if(!document.getElementById("userRoleSelect").disabled){row.role=document.getElementById("userRoleSelect").value;row.active=document.getElementById("userActive").checked}
  const {error}=await db.from("profiles").update(row).eq("id",id);
  if(error)return toast("No se pudo guardar: "+error.message,4000);
@@ -1401,10 +1447,10 @@ async function initializeBackend(){
 }
 function reportAuthError(error){console.error(error);document.getElementById("authError").textContent=error.message;toast(error.message)}
 async function activateSession(session){
- const {data:profile,error}=await db.from("profiles").select("full_name,role,active").eq("id",session.user.id).maybeSingle();
+ const {data:profile,error}=await db.from("profiles").select("full_name,role,active,can_manage_leads").eq("id",session.user.id).maybeSingle();
  if(error)throw new Error("No pudimos verificar tu perfil: "+error.message);
  if(!profile?.active){await db.auth.signOut();throw new Error("El usuario no tiene un perfil activo.")}
- currentRole=profile.role;currentUserId=session.user.id;
+ currentRole=profile.role;currentUserId=session.user.id;canManageLeadsFlag=profile.can_manage_leads===true;
  document.getElementById("userChip").hidden=false;document.getElementById("logoutBtn").hidden=false;document.getElementById("userName").textContent=profile.full_name||session.user.email;document.getElementById("userRole").textContent=profile.role==="owner"?"Superadmin":profile.role;document.getElementById("userAvatar").textContent=(profile.full_name||session.user.email||"U").trim()[0].toUpperCase();document.querySelector(".sidebar-foot strong").textContent=profile.full_name||"Usuario";document.querySelector(".sidebar-foot small").textContent=(profile.role==="owner"?"Superadmin":"Rol: "+profile.role)+" · sesión segura";
  await Promise.all([loadRemoteProducts(),loadRemoteAdminData(),loadTutorials(),loadCustomers(),loadSiteTexts(),loadBanners(),loadSellers(),loadCourseLeads()]);
  applyPermissions();
@@ -1422,7 +1468,7 @@ function handleMercadoPagoReturn(){
  if(result==="ok")toast("Mercado Pago conectado ✅"+(params.get("cuenta")?" · "+params.get("cuenta"):""),5000);
  else toast("No se pudo conectar: "+(params.get("detalle")||"error desconocido"),6000);
 }
-function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;isSuperadmin=false;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
+function clearSessionUi(){document.getElementById("userChip").hidden=true;document.getElementById("logoutBtn").hidden=true;stopOrderWatch();currentRole=null;currentUserId=null;isSuperadmin=false;canManageLeadsFlag=false;profilesList=[];accessNotified=false;perms=ALL_PERMS;document.querySelectorAll(".nav button[data-view]").forEach(b=>b.hidden=false)}
 document.getElementById("logoutBtn").onclick=async()=>{document.getElementById("logoutBtn").disabled=true;await db.auth.signOut();document.getElementById("logoutBtn").disabled=false;toast("Sesión cerrada")};
 // ===== RECUPERAR CONTRASEÑA =====
 const showRecover=show=>{
